@@ -57,7 +57,7 @@ export const useAppStore = defineStore('app', () => {
       drawerSize.value = '100%'
       operateMinWith.value = '80'
     } else {
-      drawerSize.value = '800'
+      drawerSize.value = '880'
       operateMinWith.value = '240'
     }
     device.value = e

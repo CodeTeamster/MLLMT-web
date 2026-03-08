@@ -1,71 +1,36 @@
 <template>
   <div>
-    <div class="gva-search-box">
-      <el-form ref="elSearchFormRef" :inline="true" :model="searchInfo" class="demo-form-inline"
-        @keyup.enter="onSubmit">
-        <el-form-item label="创建日期" prop="createdAtRange">
-          <template #label>
-            <span>
-              创建日期
-              <el-tooltip content="搜索范围是开始日期（包含）至结束日期（不包含）">
-                <el-icon>
-                  <QuestionFilled />
-                </el-icon>
-              </el-tooltip>
-            </span>
-          </template>
-
-          <el-date-picker v-model="searchInfo.createdAtRange" class="!w-380px" type="datetimerange" range-separator="至"
-            start-placeholder="开始时间" end-placeholder="结束时间" />
-        </el-form-item>
-
-
-        <template v-if="showAllQuery">
-          <!-- 将需要控制显示状态的查询条件添加到此范围内 -->
-        </template>
-
-        <el-form-item>
-          <el-button type="primary" icon="search" @click="onSubmit">查询</el-button>
-          <el-button icon="refresh" @click="onReset">重置</el-button>
-          <!-- <el-button link type="primary" icon="arrow-down" @click="showAllQuery = true"
-            v-if="!showAllQuery">展开</el-button>
-          <el-button link type="primary" icon="arrow-up" @click="showAllQuery = false" v-else>收起</el-button> -->
-        </el-form-item>
-      </el-form>
-    </div>
     <div class="gva-table-box">
       <div class="gva-btn-list">
-        <el-button v-auth="btnAuth.add" type="primary" icon="plus" @click="openDialog()">新增</el-button>
-        <el-button v-auth="btnAuth.batchDelete" icon="delete" style="margin-left: 10px;"
-          :disabled="!multipleSelection.length" @click="onDelete">删除</el-button>
+        <el-button type="primary" icon="plus" @click="openDialog()">新增</el-button>
+        <el-button icon="delete" style="margin-left: 10px;" :disabled="!multipleSelection.length"
+          @click="onDelete">删除</el-button>
 
       </div>
       <el-table ref="multipleTable" style="width: 100%" tooltip-effect="dark" :data="tableData" row-key="ID"
         @selection-change="handleSelectionChange">
         <el-table-column type="selection" width="55" />
 
-        <el-table-column sortable align="left" label="日期" prop="CreatedAt" width="300">
+        <!-- <el-table-column sortable align="left" label="日期" prop="CreatedAt" width="180">
           <template #default="scope">{{ formatDate(scope.row.CreatedAt) }}</template>
+</el-table-column> -->
+
+        <el-table-column align="left" label="用户提示词" prop="prompt" width="280" />
+
+        <el-table-column align="left" label="样本图片" prop="img" width="160">
+          <template #default="scope">
+            <!-- <CustomPic pic-type="file" :pic-src="scope.row.img" preview /> -->
+            <div class="pic-cell">
+              <CustomPic pic-type="file" :pic-src="scope.row.img" preview />
+            </div>
+          </template>
         </el-table-column>
-
-        <el-table-column align="left" label="数据集名称" prop="datasetName" width="280" />
-
-        <el-table-column align="left" label="权限" prop="scope" width="200">
-          <template #default="scope">{{ formatScope(scope.row.scope) }}</template>
-        </el-table-column>
-
-        <!-- <el-table-column align="left" label="创建人id" prop="creatorId" width="120" /> -->
 
         <el-table-column align="left" label="操作" fixed="right" :min-width="appStore.operateMinWith">
           <template #default="scope">
-            <el-button v-auth="btnAuth.info" type="primary" link class="table-button"
-              @click="getDetails(scope.row)"><el-icon style="margin-right: 5px">
-                <MessageBox />
-              </el-icon>样本管理</el-button>
-            <el-button v-auth="btnAuth.edit" type="primary" link icon="edit" class="table-button"
-              @click="updateBizDatasetFunc(scope.row)">编辑</el-button>
-            <el-button v-auth="btnAuth.delete" type="primary" link icon="delete"
-              @click="deleteRow(scope.row)">删除</el-button>
+            <el-button type="primary" link icon="edit" class="table-button"
+              @click="updateBizSampleFunc(scope.row)">编辑</el-button>
+            <el-button type="primary" link icon="delete" @click="deleteRow(scope.row)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -88,53 +53,49 @@
       </template>
 
       <el-form :model="formData" label-position="top" ref="elFormRef" :rules="rule" label-width="80px">
-        <el-form-item label="数据集名称:" prop="datasetName">
-          <el-input v-model="formData.datasetName" :clearable="true" placeholder="请输入数据集名称" />
+        <el-form-item label="用户提示词:" prop="prompt">
+          <el-input v-model="formData.prompt" :clearable="true" placeholder="请输入用户提示词" />
         </el-form-item>
-        <el-form-item label="权限:" prop="scope">
-          <el-select v-model.number="formData.scope" placeholder="请选择权限" :clearable="true">
-            <el-option :label="'仅自己可见'" :value="0" />
-            <el-option :label="'所有人可见'" :value="1" />
-          </el-select>
+        <el-form-item label="样本图片:" prop="img">
+          <SelectImage v-model="formData.img" file-type="image" rectangle />
         </el-form-item>
       </el-form>
     </el-drawer>
-
-    <el-drawer destroy-on-close :size="appStore.drawerSize" v-model="detailShow" :show-close="true"
-      :before-close="closeDetailShow" title="样本管理">
-      <BizSample :dataset-id="detailForm.ID" />
-    </el-drawer>
-
   </div>
 </template>
 
 <script setup>
 import {
-  createBizDataset,
-  deleteBizDataset,
-  deleteBizDatasetByIds,
-  updateBizDataset,
-  findBizDataset,
-  getBizDatasetList
-} from '@/api/biz/biz_dataset'
+  createBizSample,
+  deleteBizSample,
+  deleteBizSampleByIds,
+  updateBizSample,
+  findBizSample,
+  getBizSampleList
+} from '@/api/biz/biz_sample'
 
 // 全量引入格式化工具 请按需保留
 import { getDictFunc, formatDate, formatBoolean, filterDict, filterDataSource, returnArrImg, onDownloadFile } from '@/utils/format'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { ref, reactive } from 'vue'
-// 引入按钮权限标识
-import { useBtnAuth } from '@/utils/btnAuth'
 import { useAppStore } from "@/pinia"
-import BizSample from '@/view/biz/biz_sample/biz_sample.vue'
+import CustomPic from '@/components/customPic/index.vue'
+import SelectImage from '@/components/selectImage/selectImage.vue'
 
 
 
 
 defineOptions({
-  name: 'BizDataset'
+  name: 'BizSample'
 })
-// 按钮权限实例化
-const btnAuth = useBtnAuth()
+
+// 接收父组件传入的数据集 ID
+const parentProps = defineProps({
+  datasetId: {
+    type: [Number, String],
+    default: undefined
+  }
+})
 
 // 提交按钮loading
 const btnLoading = ref(false)
@@ -145,14 +106,20 @@ const showAllQuery = ref(false)
 
 // 自动化生成的字典（可能为空）以及字段
 const formData = ref({
-  datasetName: '',
-  scope: undefined,
-  creatorId: undefined,
+  datasetId: parentProps.datasetId, // 将父组件传入的 datasetId 作为初始值
+  prompt: '',
+  img: '',
 })
 
 // 验证规则
 const rule = reactive({
-  datasetName: [{
+  datasetId: [{
+    required: true,
+    message: '',
+    trigger: ['input', 'blur'],
+  },
+  ],
+  prompt: [{
     required: true,
     message: '',
     trigger: ['input', 'blur'],
@@ -163,17 +130,16 @@ const rule = reactive({
     trigger: ['input', 'blur'],
   }
   ],
-  scope: [{
+  img: [{
     required: true,
     message: '',
     trigger: ['input', 'blur'],
   },
-  ],
-  creatorId: [{
-    required: true,
-    message: '',
+  {
+    whitespace: true,
+    message: '不能只输入空格',
     trigger: ['input', 'blur'],
-  },
+  }
   ],
 })
 
@@ -185,10 +151,8 @@ const page = ref(1)
 const total = ref(0)
 const pageSize = ref(10)
 const tableData = ref([])
-const searchInfo = ref({})
 // 重置
 const onReset = () => {
-  searchInfo.value = {}
   getTableData()
 }
 
@@ -215,7 +179,7 @@ const handleCurrentChange = (val) => {
 
 // 查询
 const getTableData = async () => {
-  const table = await getBizDatasetList({ page: page.value, pageSize: pageSize.value, ...searchInfo.value })
+  const table = await getBizSampleList({ page: page.value, pageSize: pageSize.value, datasetId: parentProps.datasetId })
   if (table.code === 0) {
     tableData.value = table.data.list
     total.value = table.data.total
@@ -249,7 +213,7 @@ const deleteRow = (row) => {
     cancelButtonText: '取消',
     type: 'warning'
   }).then(() => {
-    deleteBizDatasetFunc(row)
+    deleteBizSampleFunc(row)
   })
 }
 
@@ -272,7 +236,7 @@ const onDelete = async () => {
       multipleSelection.value.map(item => {
         IDs.push(item.ID)
       })
-    const res = await deleteBizDatasetByIds({ IDs })
+    const res = await deleteBizSampleByIds({ IDs })
     if (res.code === 0) {
       ElMessage({
         type: 'success',
@@ -290,8 +254,8 @@ const onDelete = async () => {
 const type = ref('')
 
 // 更新行
-const updateBizDatasetFunc = async (row) => {
-  const res = await findBizDataset({ ID: row.ID })
+const updateBizSampleFunc = async (row) => {
+  const res = await findBizSample({ ID: row.ID })
   type.value = 'update'
   if (res.code === 0) {
     formData.value = res.data
@@ -300,8 +264,8 @@ const updateBizDatasetFunc = async (row) => {
 }
 
 // 删除行
-const deleteBizDatasetFunc = async (row) => {
-  const res = await deleteBizDataset({ ID: row.ID })
+const deleteBizSampleFunc = async (row) => {
+  const res = await deleteBizSample({ ID: row.ID })
   if (res.code === 0) {
     ElMessage({
       type: 'success',
@@ -327,9 +291,9 @@ const openDialog = () => {
 const closeDialog = () => {
   dialogFormVisible.value = false
   formData.value = {
-    datasetName: '',
-    scope: undefined,
-    creatorId: undefined,
+    datasetId: parentProps.datasetId,
+    prompt: '',
+    img: '',
   }
 }
 
@@ -341,13 +305,13 @@ const enterDialog = async () => {
     let res
     switch (type.value) {
       case 'create':
-        res = await createBizDataset(formData.value)
+        res = await createBizSample(formData.value)
         break
       case 'update':
-        res = await updateBizDataset(formData.value)
+        res = await updateBizSample(formData.value)
         break
       default:
-        res = await createBizDataset(formData.value)
+        res = await createBizSample(formData.value)
         break
     }
     btnLoading.value = false
@@ -375,7 +339,7 @@ const openDetailShow = () => {
 // 打开详情
 const getDetails = async (row) => {
   // 打开弹窗
-  const res = await findBizDataset({ ID: row.ID })
+  const res = await findBizSample({ ID: row.ID })
   if (res.code === 0) {
     detailForm.value = res.data
     openDetailShow()
@@ -388,16 +352,15 @@ const closeDetailShow = () => {
   detailForm.value = {}
 }
 
-// 将权限数字映射为字符串
-const scopeMap = {
-  0: '仅自己可见',
-  1: '所有人可见',
-}
-const formatScope = (val) => {
-  if (val === undefined || val === null) return ''
-  return scopeMap[val] ?? String(val)
-}
-
 </script>
 
-<style></style>
+<style>
+.pic-cell {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: flex-start; /* 左对齐 */
+  align-items: center;          /* 垂直居中，可按需改为 flex-start */
+  overflow: hidden;
+}
+</style>
