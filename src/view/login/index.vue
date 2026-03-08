@@ -20,7 +20,7 @@
                 {{ $GIN_VUE_ADMIN.appName }}
               </p>
               <p class="text-center text-sm font-normal text-gray-500 mt-2.5">
-                A management platform using Golang and Vue
+                Multi-modal Large Language Model Turbo
               </p>
             </div>
             <el-form
@@ -79,7 +79,7 @@
                   >登 录</el-button
                 >
               </el-form-item>
-              <el-form-item v-if="isDev" class="mb-6">
+              <!-- <el-form-item v-if="isDev" class="mb-6">
                 <el-button
                   class="shadow shadow-active h-11 w-full"
                   type="primary"
@@ -87,7 +87,7 @@
                   @click="checkInit"
                   >前往初始化</el-button
                 >
-              </el-form-item>
+              </el-form-item> -->
             </el-form>
           </div>
         </div>
@@ -101,7 +101,7 @@
       </div>
     </div>
 
-    <BottomInfo class="left-0 right-0 absolute bottom-3 mx-auto w-full z-20">
+    <!-- <BottomInfo class="left-0 right-0 absolute bottom-3 mx-auto w-full z-20">
       <div class="links items-center justify-center gap-2 hidden md:flex">
         <a href="https://www.gin-vue-admin.com/" target="_blank">
           <img src="@/assets/docs.png" class="w-8 h-8" alt="文档" />
@@ -119,7 +119,7 @@
           <img src="@/assets/video.png" class="w-8 h-8" alt="视频站" />
         </a>
       </div>
-    </BottomInfo>
+    </BottomInfo> -->
   </div>
 </template>
 

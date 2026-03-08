@@ -9,22 +9,14 @@
     <div class="text-center">
       <span class="mr-1">Powered by</span>
       <span>
-        <a
-          class="font-bold text-active"
-          href="https://github.com/flipped-aurora/gin-vue-admin"
-          >Gin-Vue-Admin</a
-        >
+        <a class="font-bold text-active">MLLMT</a>
       </span>
     </div>
     <slot />
     <div class="text-center">
       <span class="mr-1">Copyright</span>
       <span>
-        <a
-          class="font-bold text-active"
-          href="https://github.com/flipped-aurora"
-          >flipped-aurora团队</a
-        >
+        <a class="font-bold text-active">人民当家做组</a>
       </span>
     </div>
   </div>

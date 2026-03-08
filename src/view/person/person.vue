@@ -54,25 +54,25 @@
                 >
                   <div class="flex items-center gap-2">
                     <el-icon><location /></el-icon>
-                    <span>中国·北京市·朝阳区</span>
+                    <span>中国·宁波市·鄞州区</span>
                   </div>
                   <div class="flex items-center gap-2">
                     <el-icon><office-building /></el-icon>
-                    <span>北京翻转极光科技有限公司</span>
+                    <span>浙江大学</span>
                   </div>
                   <div class="flex items-center gap-2">
                     <el-icon><user /></el-icon>
-                    <span>技术部·前端事业群</span>
+                    <span>软件学院</span>
                   </div>
                 </div>
               </div>
 
-              <div class="flex gap-4 mt-4">
+              <!-- <div class="flex gap-4 mt-4">
                 <el-button type="primary" plain icon="message">
                   发送消息
                 </el-button>
                 <el-button icon="share"> 分享主页 </el-button>
-              </div>
+              </div> -->
             </div>
           </div>
         </div>
@@ -147,8 +147,8 @@
           <div class="flex flex-wrap gap-2">
             <el-tag effect="plain" type="success">GoLang</el-tag>
             <el-tag effect="plain" type="warning">JavaScript</el-tag>
-            <el-tag effect="plain" type="danger">Vue</el-tag>
-            <el-tag effect="plain" type="info">Gorm</el-tag>
+            <el-tag effect="plain" type="danger">Python</el-tag>
+            <el-tag effect="plain" type="info">C++</el-tag>
             <el-button link class="text-sm">
               <el-icon><plus /></el-icon>
               添加技能
@@ -173,7 +173,7 @@
                   <div
                     class="text-2xl lg:text-4xl font-bold text-blue-500 mb-2"
                   >
-                    138
+                    3
                   </div>
                   <div class="text-gray-500 text-sm">项目参与</div>
                 </div>
@@ -181,7 +181,7 @@
                   <div
                     class="text-2xl lg:text-4xl font-bold text-green-500 mb-2"
                   >
-                    2.3k
+                    1.3k
                   </div>
                   <div class="text-gray-500 text-sm">代码提交</div>
                 </div>
@@ -189,17 +189,17 @@
                   <div
                     class="text-2xl lg:text-4xl font-bold text-purple-500 mb-2"
                   >
-                    95%
+                    60%
                   </div>
-                  <div class="text-gray-500 text-sm">任务完成</div>
+                  <div class="text-gray-500 text-sm">任务进度</div>
                 </div>
                 <div class="stat-card">
                   <div
                     class="text-2xl lg:text-4xl font-bold text-yellow-500 mb-2"
                   >
-                    12
+                    3.5
                   </div>
-                  <div class="text-gray-500 text-sm">获得勋章</div>
+                  <div class="text-gray-500 text-sm">绩效考核</div>
                 </div>
               </div>
             </el-tab-pane>

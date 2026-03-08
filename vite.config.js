@@ -68,7 +68,7 @@ export default ({ mode }) => {
     },
     server: {
       // 如果使用docker-compose开发模式，设置为false
-      open: true,
+      open: false,
       port: process.env.VITE_CLI_PORT,
       proxy: {
         // 把key的路径代理到target位置
@@ -107,7 +107,7 @@ export default ({ mode }) => {
     optimizeDeps,
     plugins: [
       process.env.VITE_POSITION === 'open' &&
-      vueDevTools({ launchEditor: process.env.VITE_EDITOR }),
+      // vueDevTools({ launchEditor: process.env.VITE_EDITOR }),
       legacyPlugin({
         targets: [
           'Android > 39',
