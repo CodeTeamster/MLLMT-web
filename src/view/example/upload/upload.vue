@@ -103,7 +103,7 @@
               align="left"
               label="文件名/备注"
               prop="name"
-              width="180"
+              width="150"
             >
               <template #default="scope">
                 <div
@@ -118,9 +118,9 @@
               align="left"
               label="链接"
               prop="url"
-              min-width="300"
+              min-width="260"
             />
-            <el-table-column align="left" label="标签" prop="tag" width="100">
+            <el-table-column align="left" label="标签" prop="tag" width="80">
               <template #default="scope">
                 <el-tag
                   :type="
@@ -131,7 +131,7 @@
                 </el-tag>
               </template>
             </el-table-column>
-            <el-table-column align="left" label="操作" width="160">
+            <el-table-column align="left" label="操作" min-width="160">
               <template #default="scope">
                 <el-button
                   icon="download"
