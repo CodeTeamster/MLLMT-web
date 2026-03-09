@@ -374,9 +374,15 @@ const type = ref('')
 // 更新行
 const updateBizModelFunc = async (row) => {
   const res = await findBizModel({ ID: row.ID })
+  await loadAlgorithmOptions()
   type.value = 'update'
   if (res.code === 0) {
     formData.value = res.data
+    const sel = algorithmOptions.value.find(item => item.id === formData.value.algorithmId)
+    if (sel) {
+      formData.value.algorithmId = sel.id
+      formData.value.algorithmName = sel.name
+    }
     dialogFormVisible.value = true
   }
 }
