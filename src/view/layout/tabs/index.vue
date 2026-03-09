@@ -108,7 +108,7 @@
       {
         name: defaultRouter.value,
         meta: {
-          title: '首页'
+          title: '多模态大模型推理'
         },
         query: {},
         params: {}
@@ -331,7 +331,7 @@
       {
         name: defaultRouter.value,
         meta: {
-          title: '首页'
+          title: '多模态大模型推理'
         },
         query: {},
         params: {}
