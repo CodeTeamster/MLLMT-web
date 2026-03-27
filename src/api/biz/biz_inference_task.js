@@ -124,3 +124,19 @@ export const getBizInferenceTaskPublic = () => {
     method: 'get',
   })
 }
+
+// @Tags BizInferenceTask
+// @Summary 获取实时性能可视化数据
+// @Security ApiKeyAuth
+// @Accept application/json
+// @Produce application/json
+// @Param data query request.PageInfo true "获取实时性能可视化数据"
+// @Success 200 {string} string "{"success":true,"data":{},"msg":"获取成功"}"
+// @Router /inferenceTask/getRealtimeVisualization [get]
+export const getRealtimeVisualization = (params) => {
+  return service({
+    url: '/inferenceTask/getRealtimeVisualization',
+    method: 'get',
+    params
+  })
+}

@@ -11,7 +11,7 @@
       :content="userStore.userInfo.nickName"
     />
     <gva-header />
-    <div class="flex flex-row w-full gva-container pt-16 box-border !h-full">
+    <div class="flex flex-row w-full gva-container pt-14 box-border !h-full">
       <gva-aside
         v-if="
           config.side_mode === 'normal' ||
@@ -27,8 +27,8 @@
       <div class="flex-1 w-0 h-full">
         <gva-tabs v-if="config.showTabs" />
         <div
-          class="overflow-auto px-2"
-          :class="config.showTabs ? 'gva-container2' : 'gva-container pt-1'"
+          class="overflow-auto px-3 sm:px-4"
+          :class="config.showTabs ? 'gva-container2' : 'gva-container pt-2'"
         >
           <router-view v-if="reloadFlag" v-slot="{ Component, route }">
             <div

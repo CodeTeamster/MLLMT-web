@@ -1,5 +1,17 @@
 <template>
-  <div>
+  <div class="dataset-page">
+    <div class="dataset-hero">
+      <div>
+        <p class="dataset-hero-eyebrow">Dataset Workspace</p>
+        <h2 class="dataset-hero-title">数据集管理</h2>
+        <p class="dataset-hero-desc">统一管理数据集资产、可见范围与样本内容，支撑多模态推理全流程。</p>
+      </div>
+      <div class="dataset-hero-metrics">
+        <span>资产治理</span>
+        <span>权限管控</span>
+        <span>样本联动</span>
+      </div>
+    </div>
     <div class="gva-search-box">
       <el-form ref="elSearchFormRef" :inline="true" :model="searchInfo" class="demo-form-inline"
         @keyup.enter="onSubmit">
@@ -25,7 +37,7 @@
         </template>
 
         <el-form-item>
-          <el-button type="primary" icon="search" @click="onSubmit">查询</el-button>
+          <el-button class="dataset-btn-primary" type="primary" icon="search" @click="onSubmit">查询</el-button>
           <el-button icon="refresh" @click="onReset">重置</el-button>
           <!-- <el-button link type="primary" icon="arrow-down" @click="showAllQuery = true"
             v-if="!showAllQuery">展开</el-button>
@@ -35,12 +47,12 @@
     </div>
     <div class="gva-table-box">
       <div class="gva-btn-list">
-        <el-button v-auth="btnAuth.add" type="primary" icon="plus" @click="openDialog()">新增</el-button>
-        <el-button v-auth="btnAuth.batchDelete" icon="delete" style="margin-left: 10px;"
+        <el-button class="dataset-btn-primary" v-auth="btnAuth.add" type="primary" icon="plus" @click="openDialog()">新增</el-button>
+        <el-button class="dataset-btn-danger" v-auth="btnAuth.batchDelete" icon="delete" style="margin-left: 10px;"
           :disabled="!multipleSelection.length" @click="onDelete">删除</el-button>
 
       </div>
-      <el-table ref="multipleTable" style="width: 100%" tooltip-effect="dark" :data="tableData" row-key="ID"
+      <el-table ref="multipleTable" class="dataset-table" style="width: 100%" tooltip-effect="dark" :data="tableData" row-key="ID"
         @selection-change="handleSelectionChange">
         <el-table-column type="selection" width="55" />
 
@@ -75,7 +87,7 @@
           @size-change="handleSizeChange" />
       </div>
     </div>
-    <el-drawer destroy-on-close :size="appStore.drawerSize" v-model="dialogFormVisible" :show-close="false"
+    <el-drawer class="dataset-drawer" destroy-on-close :size="appStore.drawerSize" v-model="dialogFormVisible" :show-close="false"
       :before-close="closeDialog">
       <template #header>
         <div class="flex justify-between items-center">
@@ -87,7 +99,7 @@
         </div>
       </template>
 
-      <el-form :model="formData" label-position="top" ref="elFormRef" :rules="rule" label-width="80px">
+      <el-form class="dataset-form" :model="formData" label-position="top" ref="elFormRef" :rules="rule" label-width="80px">
         <el-form-item label="数据集名称:" prop="datasetName">
           <el-input v-model="formData.datasetName" :clearable="true" placeholder="请输入数据集名称" />
         </el-form-item>
@@ -100,7 +112,7 @@
       </el-form>
     </el-drawer>
 
-    <el-drawer destroy-on-close :size="appStore.drawerSize" v-model="detailShow" :show-close="true"
+    <el-drawer class="dataset-drawer" destroy-on-close :size="appStore.drawerSize" v-model="detailShow" :show-close="true"
       :before-close="closeDetailShow" title="样本管理">
       <BizSample :dataset-id="detailForm.ID" />
     </el-drawer>
@@ -400,4 +412,176 @@ const formatScope = (val) => {
 
 </script>
 
-<style></style>
+<style scoped lang="scss">
+.dataset-page {
+  --panel-bg: #fbfdff;
+  --panel-border: rgba(34, 101, 160, 0.06);
+  --muted-text: rgba(55, 72, 86, 0.78);
+  --strong-text: #0b304f;
+  --accent: #2f9dff;
+  --accent-2: #62d8ff;
+  --danger: #ff6b6b;
+  min-height: 100%;
+  padding: 12px;
+}
+
+.dataset-hero {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 20px;
+  margin-bottom: 12px;
+  border: 1px solid var(--panel-border);
+  border-radius: 16px;
+  background: linear-gradient(145deg, #f7fbff, #eef7ff);
+  box-shadow: 0 8px 20px rgba(16,36,56,0.06);
+}
+
+.dataset-hero-eyebrow {
+  margin: 0;
+  font-size: 12px;
+  letter-spacing: 1.4px;
+  color: rgba(45, 105, 160, 0.9);
+  text-transform: uppercase;
+}
+
+.dataset-hero-title {
+  margin: 6px 0 0;
+  font-size: 24px;
+  color: var(--strong-text);
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.dataset-hero-desc {
+  margin: 8px 0 0;
+  color: var(--muted-text);
+  font-size: 13px;
+}
+
+.dataset-hero-metrics {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.dataset-hero-metrics span {
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(47, 157, 255, 0.12);
+  color: #11609b;
+  font-size: 12px;
+  background: rgba(240, 248, 255, 0.9);
+}
+
+:deep(.gva-search-box),
+:deep(.gva-table-box) {
+  border: 1px solid var(--panel-border);
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 0 8px 20px rgba(16,36,56,0.04);
+}
+
+:deep(.gva-search-box) {
+  padding: 14px 16px 8px;
+  margin-bottom: 12px;
+}
+
+:deep(.gva-table-box) {
+  padding: 12px 12px 8px;
+}
+
+:deep(.el-form-item__label),
+:deep(.el-table th.el-table__cell > .cell) {
+  color: var(--strong-text);
+}
+
+:deep(.el-input__wrapper),
+:deep(.el-textarea__inner),
+:deep(.el-select__wrapper) {
+  background: #ffffff;
+  box-shadow: inset 0 0 0 1px rgba(34,101,160,0.06);
+  border-radius: 8px;
+}
+
+:deep(.el-input__wrapper.is-focus),
+:deep(.el-select__wrapper.is-focused) {
+  box-shadow: 0 0 0 3px rgba(47,157,255,0.12);
+}
+
+:deep(.el-input__inner),
+:deep(.el-textarea__inner),
+:deep(.el-select__placeholder),
+:deep(.el-select__selected-item) {
+  color: var(--strong-text);
+}
+
+.dataset-btn-primary {
+  border: none;
+  background: linear-gradient(92deg, var(--accent), var(--accent-2));
+  box-shadow: 0 8px 18px rgba(47, 157, 255, 0.12);
+  color: white;
+}
+
+.dataset-btn-primary:hover {
+  transform: translateY(-1px);
+}
+
+.dataset-btn-danger {
+  border-color: rgba(255, 107, 107, 0.12);
+  color: #9b3b3b;
+  background: rgba(255, 240, 240, 0.9);
+}
+
+:deep(.dataset-table .el-table__header-wrapper th.el-table__cell) {
+  background: #eef8ff;
+  color: var(--strong-text);
+}
+
+:deep(.dataset-table .el-table__body tr) {
+  background: #ffffff;
+}
+
+:deep(.dataset-table .el-table__body tr:hover > td.el-table__cell) {
+  background: #f6fbff;
+}
+
+:deep(.dataset-table .el-table__cell) {
+  border-bottom-color: rgba(34, 101, 160, 0.06);
+  color: var(--strong-text);
+}
+
+:deep(.gva-pagination) {
+  margin-top: 10px;
+  padding-bottom: 12px;
+}
+
+:deep(.dataset-drawer .el-drawer) {
+  background: #ffffff;
+}
+
+:deep(.dataset-drawer .el-drawer__header) {
+  margin-bottom: 0;
+  border-bottom: 1px solid rgba(34, 101, 160, 0.06);
+  color: var(--strong-text);
+}
+
+:deep(.dataset-drawer .el-drawer__body) {
+  color: var(--muted-text);
+}
+
+:deep(.dataset-form .el-form-item__label) {
+  color: var(--strong-text);
+}
+
+@media (max-width: 768px) {
+  .dataset-page { padding: 8px; }
+  .dataset-hero { flex-direction: column; align-items: flex-start; }
+  .dataset-hero-metrics { justify-content: flex-start; }
+  :deep(.gva-search-box) { padding: 12px 10px 0; }
+  :deep(.gva-table-box) { padding: 10px 8px 0; }
+}
+</style>
+
