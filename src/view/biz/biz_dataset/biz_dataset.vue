@@ -414,15 +414,18 @@ const formatScope = (val) => {
 
 <style scoped lang="scss">
 .dataset-page {
-  --panel-bg: #fbfdff;
-  --panel-border: rgba(34, 101, 160, 0.06);
-  --muted-text: rgba(55, 72, 86, 0.78);
-  --strong-text: #0b304f;
-  --accent: #2f9dff;
-  --accent-2: #62d8ff;
-  --danger: #ff6b6b;
+  --panel-bg: #0f1d38;
+  --panel-border: rgba(108, 141, 198, 0.24);
+  --muted-text: #9baccc;
+  --strong-text: #e6edfb;
+  --accent: #4d87ff;
+  --accent-dark: #2f6edf;
+  --accent-light: rgba(77, 135, 255, 0.16);
+  --line-soft: rgba(108, 141, 198, 0.26);
+  --danger: #f87171;
   min-height: 100%;
   padding: 12px;
+  background: #1f2c46;
 }
 
 .dataset-hero {
@@ -430,33 +433,49 @@ const formatScope = (val) => {
   align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
-  padding: 18px 20px;
+  padding: 22px 24px;
   margin-bottom: 12px;
   border: 1px solid var(--panel-border);
-  border-radius: 16px;
-  background: linear-gradient(145deg, #f7fbff, #eef7ff);
-  box-shadow: 0 8px 20px rgba(16,36,56,0.06);
+  border-radius: 14px;
+  background: linear-gradient(135deg, #091830 0%, #10264b 60%, #17396b 100%);
+  box-shadow: 0 8px 28px rgba(3, 8, 20, 0.5);
+  color: #dde8ff;
+  position: relative;
+  overflow: hidden;
+}
+
+.dataset-hero::before {
+  content: '';
+  position: absolute;
+  top: -40%;
+  right: -8%;
+  width: 260px;
+  height: 260px;
+  border-radius: 50%;
+  background: rgba(77, 135, 255, 0.2);
+  filter: blur(50px);
+  pointer-events: none;
 }
 
 .dataset-hero-eyebrow {
   margin: 0;
   font-size: 12px;
   letter-spacing: 1.4px;
-  color: rgba(45, 105, 160, 0.9);
+  color: rgba(188, 212, 255, 0.9);
   text-transform: uppercase;
 }
 
 .dataset-hero-title {
   margin: 6px 0 0;
   font-size: 24px;
-  color: var(--strong-text);
+  color: #f3f7ff;
   font-weight: 700;
   line-height: 1.2;
 }
 
 .dataset-hero-desc {
   margin: 8px 0 0;
-  color: var(--muted-text);
+  color: rgba(214, 227, 255, 0.8);
   font-size: 13px;
 }
 
@@ -468,20 +487,22 @@ const formatScope = (val) => {
 }
 
 .dataset-hero-metrics span {
-  padding: 6px 10px;
+  padding: 6px 12px;
   border-radius: 999px;
-  border: 1px solid rgba(47, 157, 255, 0.12);
-  color: #11609b;
+  border: 1px solid rgba(112, 155, 255, 0.45);
+  color: #bfd4ff;
   font-size: 12px;
-  background: rgba(240, 248, 255, 0.9);
+  font-weight: 600;
+  background: rgba(77, 135, 255, 0.18);
+  backdrop-filter: blur(4px);
 }
 
 :deep(.gva-search-box),
 :deep(.gva-table-box) {
-  border: 1px solid var(--panel-border);
-  border-radius: 12px;
-  background: #ffffff;
-  box-shadow: 0 8px 20px rgba(16,36,56,0.04);
+  border: 1px solid var(--line-soft);
+  border-radius: 14px;
+  background: var(--panel-bg);
+  box-shadow: 0 8px 24px rgba(3, 8, 20, 0.42);
 }
 
 :deep(.gva-search-box) {
@@ -501,14 +522,14 @@ const formatScope = (val) => {
 :deep(.el-input__wrapper),
 :deep(.el-textarea__inner),
 :deep(.el-select__wrapper) {
-  background: #ffffff;
-  box-shadow: inset 0 0 0 1px rgba(34,101,160,0.06);
-  border-radius: 8px;
+  background: #0b1933;
+  box-shadow: inset 0 0 0 1px var(--line-soft);
+  border-radius: 10px;
 }
 
 :deep(.el-input__wrapper.is-focus),
 :deep(.el-select__wrapper.is-focused) {
-  box-shadow: 0 0 0 3px rgba(47,157,255,0.12);
+  box-shadow: 0 0 0 3px rgba(77, 135, 255, 0.2);
 }
 
 :deep(.el-input__inner),
@@ -520,36 +541,39 @@ const formatScope = (val) => {
 
 .dataset-btn-primary {
   border: none;
-  background: linear-gradient(92deg, var(--accent), var(--accent-2));
-  box-shadow: 0 8px 18px rgba(47, 157, 255, 0.12);
+  background: linear-gradient(92deg, var(--accent), var(--accent-dark));
+  box-shadow: 0 6px 16px rgba(77, 135, 255, 0.3);
   color: white;
+  transition: all 0.2s ease;
 }
 
 .dataset-btn-primary:hover {
   transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(77, 135, 255, 0.42);
 }
 
 .dataset-btn-danger {
-  border-color: rgba(255, 107, 107, 0.12);
-  color: #9b3b3b;
-  background: rgba(255, 240, 240, 0.9);
+  border-color: rgba(248, 113, 113, 0.4);
+  color: #ffc4c4;
+  background: rgba(127, 29, 29, 0.4);
 }
 
 :deep(.dataset-table .el-table__header-wrapper th.el-table__cell) {
-  background: #eef8ff;
+  background: #112546;
   color: var(--strong-text);
+  font-weight: 600;
 }
 
 :deep(.dataset-table .el-table__body tr) {
-  background: #ffffff;
+  background: var(--panel-bg);
 }
 
 :deep(.dataset-table .el-table__body tr:hover > td.el-table__cell) {
-  background: #f6fbff;
+  background: #14294d;
 }
 
 :deep(.dataset-table .el-table__cell) {
-  border-bottom-color: rgba(34, 101, 160, 0.06);
+  border-bottom-color: var(--line-soft);
   color: var(--strong-text);
 }
 
@@ -559,12 +583,12 @@ const formatScope = (val) => {
 }
 
 :deep(.dataset-drawer .el-drawer) {
-  background: #ffffff;
+  background: var(--panel-bg);
 }
 
 :deep(.dataset-drawer .el-drawer__header) {
   margin-bottom: 0;
-  border-bottom: 1px solid rgba(34, 101, 160, 0.06);
+  border-bottom: 1px solid var(--line-soft);
   color: var(--strong-text);
 }
 

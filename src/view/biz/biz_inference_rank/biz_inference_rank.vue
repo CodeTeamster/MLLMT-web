@@ -1,5 +1,18 @@
 <template>
   <div class="rank-page" v-loading="rankLoading">
+    <div class="rank-hero">
+      <div>
+        <p class="rank-hero-eyebrow">Leaderboard</p>
+        <h2 class="rank-hero-title">推理排行榜</h2>
+        <p class="rank-hero-desc">按不同指标维度对比模型推理性能，发现最优方案。</p>
+      </div>
+      <div class="rank-hero-metrics">
+        <span>性能排名</span>
+        <span>多维对比</span>
+        <span>实时更新</span>
+      </div>
+    </div>
+
     <div class="rank-panel">
       <div class="filter-row">
         <div class="filter-item">
@@ -254,25 +267,104 @@ onMounted(() => {
 
 <style scoped>
 .rank-page {
+  --page-bg: #1f2c46;
+  --panel-bg: #0f1d38;
+  --line-soft: rgba(108, 141, 198, 0.26);
+  --text-main: #e6edfb;
+  --text-sub: #9baccc;
+  --accent: #4d87ff;
+  --accent-border: rgba(108, 141, 198, 0.24);
   min-height: calc(100vh - 120px);
   padding: 16px;
-  background: #f3f6fb;
+  background: var(--page-bg);
 }
 
-.rank-panel {
-  border: 1px solid #dbe3ef;
-  border-radius: 8px;
-  background: #ffffff;
+/* ── Hero ───────────────────── */
+.rank-hero {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 22px 24px;
+  margin-bottom: 16px;
+  border: 1px solid var(--accent-border);
+  border-radius: 14px;
+  background: linear-gradient(135deg, #091830 0%, #10264b 60%, #17396b 100%);
+  box-shadow: 0 8px 28px rgba(3, 8, 20, 0.5);
+  color: #dde8ff;
+  position: relative;
   overflow: hidden;
+}
+
+.rank-hero::before {
+  content: '';
+  position: absolute;
+  top: -40%;
+  right: -8%;
+  width: 260px;
+  height: 260px;
+  border-radius: 50%;
+  background: rgba(77, 135, 255, 0.2);
+  filter: blur(50px);
+  pointer-events: none;
+}
+
+.rank-hero-eyebrow {
+  margin: 0;
+  font-size: 12px;
+  letter-spacing: 1.4px;
+  color: rgba(188, 212, 255, 0.9);
+  text-transform: uppercase;
+}
+
+.rank-hero-title {
+  margin: 6px 0 0;
+  font-size: 24px;
+  color: #f3f7ff;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.rank-hero-desc {
+  margin: 8px 0 0;
+  color: rgba(214, 227, 255, 0.8);
+  font-size: 13px;
+}
+
+.rank-hero-metrics {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.rank-hero-metrics span {
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(112, 155, 255, 0.45);
+  color: #bfd4ff;
+  font-size: 12px;
+  font-weight: 600;
+  background: rgba(77, 135, 255, 0.18);
+  backdrop-filter: blur(4px);
+}
+
+/* ── Panel ──────────────────── */
+.rank-panel {
+  border: 1px solid var(--line-soft);
+  border-radius: 14px;
+  background: var(--panel-bg);
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(3, 8, 20, 0.42);
 }
 
 .filter-row {
   display: flex;
   align-items: center;
   gap: 16px;
-  padding: 12px 16px;
-  border-bottom: 1px solid #e6edf8;
-  background: #ffffff;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--line-soft);
+  background: var(--panel-bg);
 }
 
 .filter-item {
@@ -282,8 +374,9 @@ onMounted(() => {
 }
 
 .filter-item label {
-  color: #374151;
+  color: var(--text-main);
   font-size: 14px;
+  font-weight: 600;
   line-height: 1;
   white-space: nowrap;
 }
@@ -302,7 +395,7 @@ onMounted(() => {
 .reset-btn {
   min-width: 80px;
   height: 34px;
-  border-radius: 6px;
+  border-radius: 10px;
 }
 
 .table-shell {
@@ -317,12 +410,15 @@ onMounted(() => {
 
 :deep(.el-select__wrapper) {
   min-height: 34px;
-  border-radius: 6px;
+  border-radius: 10px;
+  background: #0b1933;
+  box-shadow: inset 0 0 0 1px var(--line-soft);
 }
 
 :deep(.el-table) {
-  border: 1px solid #e6edf8;
-  border-radius: 6px;
+  border: 1px solid var(--line-soft);
+  background: var(--panel-bg);
+  border-radius: 12px;
 }
 
 :deep(.el-table .el-table__inner-wrapper::before) {
@@ -330,13 +426,18 @@ onMounted(() => {
 }
 
 :deep(.el-table th.el-table__cell) {
-  background: #f6f8fc;
-  color: #374151;
+  background: #112546;
+  color: #d5e3fd;
   font-weight: 600;
 }
 
 :deep(.el-table td.el-table__cell) {
-  color: #1f2937;
+  color: var(--text-main);
+  background: var(--panel-bg);
+}
+
+:deep(.el-table tr:hover > td.el-table__cell) {
+  background: #14294d;
 }
 
 @media (max-width: 980px) {
@@ -347,6 +448,14 @@ onMounted(() => {
 
   .action-row {
     margin-left: auto;
+  }
+
+  .rank-hero {
+    flex-direction: column;
+  }
+
+  .rank-hero-metrics {
+    justify-content: flex-start;
   }
 }
 
