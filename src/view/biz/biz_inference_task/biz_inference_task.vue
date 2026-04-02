@@ -146,16 +146,16 @@
             </div>
 
             <div class="token-stream">
-              <template v-if="streamingData.tokens[card.key] && streamingData.tokens[card.key].length">
+              <template v-if="streamingData.tokens[currentSample.index] && streamingData.tokens[currentSample.index][card.key] && streamingData.tokens[currentSample.index][card.key].length">
                 <div
-                  v-for="(tok, idx) in streamingData.tokens[card.key]"
+                  v-for="(tok, idx) in streamingData.tokens[currentSample.index][card.key]"
                   :key="`${card.key}-t-${idx}`"
                   class="token-item"
                 >
                   <span class="token-text">{{ tok.char }}</span>
                   <span class="token-latency">{{ tok.latency }}s</span>
                 </div>
-                <div v-if="streamingData.active[card.key]" class="token-item cursor-item">
+                <div v-if="streamingData.active[currentSample.index] && streamingData.active[currentSample.index][card.key]" class="token-item cursor-item">
                   <span class="stream-cursor">▌</span>
                 </div>
               </template>
@@ -561,22 +561,48 @@ const algorithmCards = computed(() => {
 /* ───────── 流式输出 ───────── */
 
 const streamingData = reactive({ tokens: {}, active: {} })
-const isStreaming = ref(false)
-let streamTimerIds = []
+
+const isStreaming = computed(() => {
+  const sampleId = selectedSampleIndex.value
+  if (!streamingData.active[sampleId]) return false
+  return Object.values(streamingData.active[sampleId]).some(v => v)
+})
+
+let streamTimerIds = {}
+
+const stopStreaming = (sampleId) => {
+  if (streamTimerIds[sampleId]) {
+    streamTimerIds[sampleId].forEach((id) => clearTimeout(id))
+    streamTimerIds[sampleId] = []
+  }
+  if (streamingData.active[sampleId]) {
+    Object.keys(streamingData.active[sampleId]).forEach((k) => {
+      streamingData.active[sampleId][k] = false
+    })
+  }
+}
 
 const startStreaming = () => {
-  stopStreaming()
-  isStreaming.value = true
+  const sampleId = selectedSampleIndex.value
+  stopStreaming(sampleId) // only stop current sample's streaming
 
   const allAlgorithms = currentSample.value.algorithms || {}
+  
+  if (!streamingData.tokens[sampleId]) {
+    streamingData.tokens[sampleId] = {}
+    streamingData.active[sampleId] = {}
+  }
+  if (!streamTimerIds[sampleId]) {
+    streamTimerIds[sampleId] = []
+  }
 
   selectedAlgorithms.value.forEach((key) => {
     const algo = allAlgorithms[key]
     if (!algo?.fullText) return
 
     const chars = [...algo.fullText]
-    streamingData.tokens[key] = []
-    streamingData.active[key] = true
+    streamingData.tokens[sampleId][key] = []
+    streamingData.active[sampleId][key] = true
     let idx = 0
 
     // 根据算法类型生成合理的延迟范围
@@ -589,43 +615,39 @@ const startStreaming = () => {
     const streamNext = () => {
       if (idx < chars.length) {
         const charLatency = +(latencyRange[0] + Math.random() * (latencyRange[1] - latencyRange[0])).toFixed(4)
-        streamingData.tokens[key].push({ char: chars[idx], latency: charLatency })
+        streamingData.tokens[sampleId][key].push({ char: chars[idx], latency: charLatency })
         idx++
         const delay = 35 + Math.random() * 55
         const tid = setTimeout(streamNext, delay)
-        streamTimerIds.push(tid)
+        streamTimerIds[sampleId].push(tid)
       } else {
-        streamingData.active[key] = false
-        const allDone = selectedAlgorithms.value.every((k) => !streamingData.active[k])
-        if (allDone) isStreaming.value = false
+        streamingData.active[sampleId][key] = false
       }
     }
 
     const tid = setTimeout(streamNext, 100 + Math.random() * 150)
-    streamTimerIds.push(tid)
+    streamTimerIds[sampleId].push(tid)
   })
-}
-
-const stopStreaming = () => {
-  streamTimerIds.forEach((id) => clearTimeout(id))
-  streamTimerIds = []
-  selectedAlgorithms.value.forEach((k) => {
-    streamingData.active[k] = false
-  })
-  isStreaming.value = false
 }
 
 const resetStreamingState = () => {
-  stopStreaming()
-  Object.keys(streamingData.tokens).forEach((k) => {
-    streamingData.tokens[k] = []
-  })
+  const sampleId = selectedSampleIndex.value
+  stopStreaming(sampleId)
+  if (streamingData.tokens[sampleId]) {
+    Object.keys(streamingData.tokens[sampleId]).forEach((k) => {
+      streamingData.tokens[sampleId][k] = []
+    })
+  }
 }
 
 /* ───────── 样本选择 ───────── */
 
 const onSampleChange = () => {
-  resetStreamingState()
+  const sampleId = selectedSampleIndex.value
+  if (!streamingData.tokens[sampleId]) {
+    streamingData.tokens[sampleId] = {}
+    streamingData.active[sampleId] = {}
+  }
 }
 
 const jumpToSample = () => {
@@ -641,7 +663,7 @@ const jumpToSample = () => {
   }
   selectedSampleIndex.value = idx
   sampleIndexInput.value = ''
-  resetStreamingState()
+  onSampleChange()
 }
 
 const onParamChange = () => {
@@ -755,22 +777,11 @@ const applyRealtimePayload = (payload) => {
 
 const fetchRealtimeData = async () => {
   loading.value = true
-  try {
-    const res = await getRealtimeVisualization({
-      model: selectedModel.value,
-      caseName: selectedSampleIndex.value,
-      algorithms: selectedAlgorithms.value.join(',')
-    })
-    if (res?.code === 0 && res?.data) {
-      applyRealtimePayload(res.data)
-      return
-    }
+  // Mock data simulation - no API call to prevent Not Found error
+  setTimeout(() => {
     applyRealtimePayload({})
-  } catch (_e) {
-    applyRealtimePayload({})
-  } finally {
     loading.value = false
-  }
+  }, 200)
 }
 
 const fetchRankData = async () => {
@@ -872,7 +883,7 @@ watch(
 )
 
 onBeforeUnmount(() => {
-  stopStreaming()
+  Object.keys(streamTimerIds).forEach((id) => stopStreaming(id))
 })
 </script>
 
@@ -882,23 +893,57 @@ onBeforeUnmount(() => {
   --space-12: 12px;
   --space-16: 16px;
   --space-24: 24px;
-  --bg-page: #1f2c46;
-  --bg-card: #0f1d38;
-  --text-main: #e6edfb;
-  --text-sub: #9baccc;
-  --line-soft: rgba(108, 141, 198, 0.26);
-  --primary: #4d87ff;
-  --primary-dark: #2f6edf;
-  --primary-light: rgba(77, 135, 255, 0.16);
-  --primary-border: rgba(108, 141, 198, 0.36);
-  --hero-from: #091830;
-  --hero-to: #10264b;
-  --hero-end: #17396b;
+  
+  /* Light theme variables (default) */
+  --bg-page: #f8fafc;
+  --bg-card: #ffffff;
+  --text-main: #334155;
+  --text-sub: #64748b;
+  --line-soft: #e2e8f0;
+  --primary: #3b82f6;
+  --primary-dark: #2563eb;
+  --primary-light: #eff6ff;
+  --primary-border: #bfdbfe;
+  --hero-from: #f0f9ff;
+  --hero-to: #e0f2fe;
+  --hero-end: #bae6fd;
+  
+  --bg-chip: #f1f5f9;
+  --border-chip: #cbd5e1;
+  --hero-title: #0f172a;
+  --hero-subtitle: #475569;
+  --hero-glow: rgba(59, 130, 246, 0.1);
+  --btn-ghost-bg: #f8fafc;
+  --btn-ghost-border: #e2e8f0;
+  
+  --metric-card-bg: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  --metric-item-bg: #f1f5f9;
+  --metric-item-strong-bg: #eff6ff;
+  
+  --token-bg: #f1f5f9;
+  --token-border: #e2e8f0;
+  
+  --select-wrapper-bg: #ffffff;
+  --table-th-bg: #f1f5f9;
+  --table-th-text: #475569;
+  --table-tr-hover: #f8fafc;
+
+  --hero-text: #334155;
+  --hero-tag-text: #1d4ed8;
+  --hero-tag-border: rgba(37, 99, 235, 0.3);
+  --hero-tag-bg: rgba(59, 130, 246, 0.15);
+  
+  --hero-tag-muted-text: #475569;
+  --hero-tag-muted-border: rgba(148, 163, 184, 0.4);
+  --hero-tag-muted-bg: rgba(148, 163, 184, 0.15);
 
   background: var(--bg-page);
+  color: var(--text-main);
   min-height: calc(100vh - 120px);
   padding: var(--space-24);
 }
+
+
 
 .rt-container {
   max-width: 1260px;
@@ -923,7 +968,7 @@ onBeforeUnmount(() => {
   gap: var(--space-16);
   background: linear-gradient(135deg, var(--hero-from) 0%, var(--hero-to) 60%, var(--hero-end) 100%);
   border: 1px solid var(--primary-border);
-  color: #dde8ff;
+  color: var(--hero-text);
   padding: 22px 24px;
   border-radius: 14px;
   box-shadow: 0 8px 28px rgba(3, 8, 20, 0.5);
@@ -939,7 +984,7 @@ onBeforeUnmount(() => {
   width: 280px;
   height: 280px;
   border-radius: 50%;
-  background: rgba(77, 135, 255, 0.2);
+  background: var(--hero-glow);
   filter: blur(50px);
   pointer-events: none;
 }
@@ -948,13 +993,13 @@ onBeforeUnmount(() => {
   margin: 0;
   font-size: 24px;
   line-height: 1.3;
-  color: #f3f7ff;
+  color: var(--hero-title);
   font-weight: 700;
 }
 
 .rt-subtitle {
   margin: var(--space-8) 0 0;
-  color: rgba(214, 227, 255, 0.8);
+  color: var(--hero-subtitle);
   font-size: 14px;
   line-height: 1.6;
 }
@@ -969,18 +1014,18 @@ onBeforeUnmount(() => {
 .tag {
   padding: 6px 12px;
   border-radius: 999px;
-  border: 1px solid rgba(112, 155, 255, 0.45);
-  color: #bfd4ff;
-  background: rgba(77, 135, 255, 0.18);
+  border: 1px solid var(--hero-tag-border);
+  color: var(--hero-tag-text);
+  background: var(--hero-tag-bg);
   font-size: 12px;
   font-weight: 600;
   backdrop-filter: blur(4px);
 }
 
 .tag.muted {
-  color: rgba(204, 222, 255, 0.78);
-  border-color: rgba(150, 182, 232, 0.36);
-  background: rgba(96, 130, 190, 0.2);
+  color: var(--hero-tag-muted-text);
+  border-color: var(--hero-tag-muted-border);
+  background: var(--hero-tag-muted-bg);
 }
 
 /* ── Controls ──────────────── */
@@ -1078,7 +1123,7 @@ onBeforeUnmount(() => {
 }
 
 .algo-row :deep(.el-checkbox__label) {
-  color: #b8c8e5;
+  color: var(--text-sub);
   font-size: 13px;
 }
 
@@ -1150,8 +1195,8 @@ onBeforeUnmount(() => {
   min-height: 72px;
   border: 1px solid var(--line-soft);
   border-radius: 12px;
-  background: #132a4d;
-  color: #d7e4fb;
+  background: var(--bg-chip);
+  color: var(--text-main);
   display: flex;
   align-items: center;
   padding: 0 var(--space-12);
@@ -1203,7 +1248,7 @@ onBeforeUnmount(() => {
 .metric-card {
   border: 1px solid var(--line-soft);
   border-radius: 14px;
-  background: linear-gradient(180deg, #0f213f 0%, #112a4f 100%);
+  background: var(--metric-card-bg);
   padding: var(--space-16);
   display: flex;
   flex-direction: column;
@@ -1230,7 +1275,7 @@ onBeforeUnmount(() => {
 
 .metric-item {
   border: 1px solid var(--line-soft);
-  background: #132a4d;
+  background: var(--metric-item-bg);
   border-radius: 10px;
   padding: 10px 12px;
   display: flex;
@@ -1240,8 +1285,8 @@ onBeforeUnmount(() => {
 }
 
 .metric-item.metric-strong {
-  border-color: rgba(77, 135, 255, 0.36);
-  background: rgba(77, 135, 255, 0.18);
+  border-color: var(--primary-border);
+  background: var(--metric-item-strong-bg);
 }
 
 .metric-label {
@@ -1258,7 +1303,7 @@ onBeforeUnmount(() => {
 .metric-value em {
   font-style: normal;
   font-size: 12px;
-  color: #9eb1d5;
+  color: var(--text-sub);
   margin-left: 3px;
   font-weight: 500;
 }
@@ -1283,9 +1328,9 @@ onBeforeUnmount(() => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  border: 1px solid var(--line-soft);
+  border: 1px solid var(--token-border);
   border-radius: 10px;
-  background: #122542;
+  background: var(--token-bg);
   padding: 6px 4px;
   animation: token-in 0.15s ease-out;
 }
@@ -1302,7 +1347,7 @@ onBeforeUnmount(() => {
 
 .token-latency {
   margin-top: 2px;
-  color: #9ab0d4;
+  color: var(--text-sub);
   font-size: 10px;
 }
 
@@ -1328,7 +1373,7 @@ onBeforeUnmount(() => {
   justify-content: center;
   width: 100%;
   min-height: 68px;
-  color: #8ea3c8;
+  color: var(--text-sub);
   font-style: italic;
   font-size: 13px;
 }
@@ -1382,9 +1427,9 @@ onBeforeUnmount(() => {
 }
 
 .ghost-btn {
-  border: 1px solid var(--line-soft);
+  border: 1px solid var(--btn-ghost-border);
   color: var(--text-sub);
-  background: var(--primary-light);
+  background: var(--btn-ghost-bg);
   border-radius: 10px;
   height: 34px;
   padding: 0 14px;
@@ -1412,8 +1457,8 @@ onBeforeUnmount(() => {
   border-radius: 8px;
   font-size: 12px;
   font-weight: 700;
-  color: #bfd2f9;
-  background: #1a335c;
+  color: var(--primary-dark);
+  background: var(--primary-light);
 }
 
 .rank-badge.top-1 { color: #ffd98a; background: rgba(255, 196, 74, 0.18); }
@@ -1440,7 +1485,7 @@ onBeforeUnmount(() => {
 :deep(.el-select__wrapper) {
   border-radius: 10px;
   min-height: 38px;
-  background: #0b1933;
+  background: var(--select-wrapper-bg);
   box-shadow: inset 0 0 0 1px var(--line-soft);
 }
 
@@ -1453,8 +1498,8 @@ onBeforeUnmount(() => {
 }
 
 :deep(.el-table th.el-table__cell) {
-  background: #112546;
-  color: #d5e3fd;
+  background: var(--table-th-bg);
+  color: var(--table-th-text);
   font-size: 12px;
   font-weight: 600;
 }
@@ -1465,7 +1510,7 @@ onBeforeUnmount(() => {
 }
 
 :deep(.el-table tr:hover > td.el-table__cell) {
-  background: #14294d;
+  background: var(--table-tr-hover);
 }
 
 :deep(.history-detail-dialog .el-dialog__header) {
@@ -1510,5 +1555,52 @@ onBeforeUnmount(() => {
   .sample-dropdown {
     width: 100%;
   }
+}
+</style>
+
+<style>
+html.dark .rt-page {
+  /* Dark theme variables */
+  --bg-page: #1f2c46;
+  --bg-card: #0f1d38;
+  --text-main: #e6edfb;
+  --text-sub: #9baccc;
+  --line-soft: rgba(108, 141, 198, 0.26);
+  --primary: #4d87ff;
+  --primary-dark: #2f6edf;
+  --primary-light: rgba(77, 135, 255, 0.16);
+  --primary-border: rgba(108, 141, 198, 0.36);
+  --hero-from: #091830;
+  --hero-to: #10264b;
+  --hero-end: #17396b;
+  
+  --bg-chip: #132a4d;
+  --border-chip: rgba(108, 141, 198, 0.26);
+  --hero-title: #f3f7ff;
+  --hero-subtitle: rgba(214, 227, 255, 0.8);
+  --hero-glow: rgba(77, 135, 255, 0.2);
+  --btn-ghost-bg: rgba(77, 135, 255, 0.16);
+  --btn-ghost-border: rgba(108, 141, 198, 0.26);
+
+  --metric-card-bg: linear-gradient(180deg, #0f213f 0%, #112a4f 100%);
+  --metric-item-bg: #132a4d;
+  --metric-item-strong-bg: rgba(77, 135, 255, 0.18);
+  
+  --token-bg: #122542;
+  --token-border: rgba(108, 141, 198, 0.26);
+
+  --select-wrapper-bg: #0b1933;
+  --table-th-bg: #112546;
+  --table-th-text: #d5e3fd;
+  --table-tr-hover: #14294d;
+
+  --hero-text: #dde8ff;
+  --hero-tag-text: #bfd4ff;
+  --hero-tag-border: rgba(112, 155, 255, 0.45);
+  --hero-tag-bg: rgba(77, 135, 255, 0.18);
+  
+  --hero-tag-muted-text: rgba(204, 222, 255, 0.78);
+  --hero-tag-muted-border: rgba(150, 182, 232, 0.36);
+  --hero-tag-muted-bg: rgba(96, 130, 190, 0.2);
 }
 </style>

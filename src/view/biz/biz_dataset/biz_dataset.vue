@@ -414,18 +414,35 @@ const formatScope = (val) => {
 
 <style scoped lang="scss">
 .dataset-page {
-  --panel-bg: #0f1d38;
-  --panel-border: rgba(108, 141, 198, 0.24);
-  --muted-text: #9baccc;
-  --strong-text: #e6edfb;
-  --accent: #4d87ff;
-  --accent-dark: #2f6edf;
-  --accent-light: rgba(77, 135, 255, 0.16);
-  --line-soft: rgba(108, 141, 198, 0.26);
-  --danger: #f87171;
+  --page-bg: #f8fafc;
+  --panel-bg: #ffffff;
+  --panel-border: #e2e8f0;
+  --muted-text: #64748b;
+  --strong-text: #334155;
+  --accent: #3b82f6;
+  --accent-dark: #2563eb;
+  --accent-light: #eff6ff;
+  --line-soft: #e2e8f0;
+  --danger: #ef4444;
+
+  --hero-bg: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 60%, #bae6fd 100%);
+  --hero-text: #334155;
+  --hero-eyebrow: #64748b;
+  --hero-title-text: #0f172a;
+  --hero-desc-text: #475569;
+  --hero-glow: rgba(59, 130, 246, 0.1);
+  --hero-tag-text: #1d4ed8;
+  --hero-tag-border: rgba(37, 99, 235, 0.3);
+  --hero-tag-bg: rgba(59, 130, 246, 0.15);
+  
+  --input-bg: #ffffff;
+  --table-th-bg: #f1f5f9;
+  --table-tr-hover: #f8fafc;
+  --table-header-text: #475569;
+
   min-height: 100%;
   padding: 12px;
-  background: #1f2c46;
+  background: var(--page-bg);
 }
 
 .dataset-hero {
@@ -437,9 +454,9 @@ const formatScope = (val) => {
   margin-bottom: 12px;
   border: 1px solid var(--panel-border);
   border-radius: 14px;
-  background: linear-gradient(135deg, #091830 0%, #10264b 60%, #17396b 100%);
-  box-shadow: 0 8px 28px rgba(3, 8, 20, 0.5);
-  color: #dde8ff;
+  background: var(--hero-bg);
+  box-shadow: 0 8px 28px rgba(3, 8, 20, 0.15);
+  color: var(--hero-text);
   position: relative;
   overflow: hidden;
 }
@@ -452,7 +469,7 @@ const formatScope = (val) => {
   width: 260px;
   height: 260px;
   border-radius: 50%;
-  background: rgba(77, 135, 255, 0.2);
+  background: var(--hero-glow);
   filter: blur(50px);
   pointer-events: none;
 }
@@ -461,21 +478,21 @@ const formatScope = (val) => {
   margin: 0;
   font-size: 12px;
   letter-spacing: 1.4px;
-  color: rgba(188, 212, 255, 0.9);
+  color: var(--hero-eyebrow);
   text-transform: uppercase;
 }
 
 .dataset-hero-title {
   margin: 6px 0 0;
   font-size: 24px;
-  color: #f3f7ff;
+  color: var(--hero-title-text);
   font-weight: 700;
   line-height: 1.2;
 }
 
 .dataset-hero-desc {
   margin: 8px 0 0;
-  color: rgba(214, 227, 255, 0.8);
+  color: var(--hero-desc-text);
   font-size: 13px;
 }
 
@@ -489,11 +506,11 @@ const formatScope = (val) => {
 .dataset-hero-metrics span {
   padding: 6px 12px;
   border-radius: 999px;
-  border: 1px solid rgba(112, 155, 255, 0.45);
-  color: #bfd4ff;
+  border: 1px solid var(--hero-tag-border);
+  color: var(--hero-tag-text);
   font-size: 12px;
   font-weight: 600;
-  background: rgba(77, 135, 255, 0.18);
+  background: var(--hero-tag-bg);
   backdrop-filter: blur(4px);
 }
 
@@ -522,7 +539,7 @@ const formatScope = (val) => {
 :deep(.el-input__wrapper),
 :deep(.el-textarea__inner),
 :deep(.el-select__wrapper) {
-  background: #0b1933;
+  background: var(--input-bg);
   box-shadow: inset 0 0 0 1px var(--line-soft);
   border-radius: 10px;
 }
@@ -559,8 +576,8 @@ const formatScope = (val) => {
 }
 
 :deep(.dataset-table .el-table__header-wrapper th.el-table__cell) {
-  background: #112546;
-  color: var(--strong-text);
+  background: var(--table-th-bg);
+  color: var(--table-header-text);
   font-weight: 600;
 }
 
@@ -569,7 +586,7 @@ const formatScope = (val) => {
 }
 
 :deep(.dataset-table .el-table__body tr:hover > td.el-table__cell) {
-  background: #14294d;
+  background: var(--table-tr-hover);
 }
 
 :deep(.dataset-table .el-table__cell) {
@@ -609,3 +626,32 @@ const formatScope = (val) => {
 }
 </style>
 
+<style>
+html.dark .dataset-page {
+  --page-bg: #1f2c46;
+  --panel-bg: #0f1d38;
+  --panel-border: rgba(108, 141, 198, 0.24);
+  --muted-text: #9baccc;
+  --strong-text: #e6edfb;
+  --accent: #4d87ff;
+  --accent-dark: #2f6edf;
+  --accent-light: rgba(77, 135, 255, 0.16);
+  --line-soft: rgba(108, 141, 198, 0.26);
+  --danger: #f87171;
+
+  --hero-bg: linear-gradient(135deg, #091830 0%, #10264b 60%, #17396b 100%);
+  --hero-text: #dde8ff;
+  --hero-eyebrow: rgba(188, 212, 255, 0.9);
+  --hero-title-text: #f3f7ff;
+  --hero-desc-text: rgba(214, 227, 255, 0.8);
+  --hero-glow: rgba(77, 135, 255, 0.2);
+  --hero-tag-text: #bfd4ff;
+  --hero-tag-border: rgba(112, 155, 255, 0.45);
+  --hero-tag-bg: rgba(77, 135, 255, 0.18);
+  
+  --input-bg: #0b1933;
+  --table-th-bg: #112546;
+  --table-tr-hover: #14294d;
+  --table-header-text: #e6edfb;
+}
+</style>

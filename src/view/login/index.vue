@@ -546,7 +546,7 @@
     border: 1px solid rgb(140 201 255 / 34%);
     border-radius: 12px;
     overflow: hidden;
-    background: rgb(170 218 255 / 14%);
+    background: #ffffff;
   }
 
   .captcha-img {
