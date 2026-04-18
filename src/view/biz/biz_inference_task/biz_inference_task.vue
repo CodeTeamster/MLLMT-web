@@ -133,15 +133,15 @@
             <div class="metric-main">
               <div class="metric-item metric-strong">
                 <span class="metric-label">吞吐量</span>
-                <span class="metric-value">{{ card.throughput }} <em>token/s</em></span>
+                <span class="metric-value">{{ getDisplayThroughput(currentSample.index, card.key, card.throughput) }} <em>token/s</em></span>
               </div>
               <div class="metric-item">
-                <span class="metric-label">首 token 延迟</span>
-                <span class="metric-value">{{ card.latency }} <em>s</em></span>
+                <span class="metric-label">token 平均延迟</span>
+                <span class="metric-value">{{ getDisplayAvgLatency(currentSample.index, card.key, card.avgLatency) }} <em>s</em></span>
               </div>
               <div class="metric-item">
                 <span class="metric-label">GPU 显存</span>
-                <span class="metric-value">{{ card.gpuMemory }} <em>G</em></span>
+                <span class="metric-value">{{ getDisplayGpuMemory(currentSample.index, card.key, card.gpuMemory) }} <em>G</em></span>
               </div>
             </div>
 
@@ -163,9 +163,9 @@
             </div>
 
             <div class="avg-block">
-              <div><b>Average Throughput:</b> {{ card.avgThroughput }} token/s</div>
-              <div><b>Average Latency:</b> {{ card.avgLatency }} s</div>
-              <div><b>Average GPU memory:</b> {{ card.avgGpuMemory }} G</div>
+              <div><b>Average Throughput:</b> {{ getDisplaySampleAvgThroughput() }} token/s</div>
+              <div><b>Average Latency:</b> {{ getDisplaySampleAvgLatency() }} s</div>
+              <div><b>Average GPU memory:</b> {{ getDisplaySampleAvgGpuMemory() }} G</div>
             </div>
           </article>
         </div>
@@ -549,6 +549,10 @@ const selectedModelLabel = computed(() => {
   return hit?.label || '--'
 })
 
+const realtimeStats = reactive({})
+const sampleAverageSnapshot = reactive({})
+const runningAlgorithmsBySample = reactive({})
+
 const algorithmCards = computed(() => {
   const allAlgorithms = currentSample.value.algorithms || {}
   const selected = new Set(selectedAlgorithms.value)
@@ -558,9 +562,170 @@ const algorithmCards = computed(() => {
     .filter((item) => item.title)
 })
 
+const getSampleById = (sampleId) => mockSamples.find((s) => s.index === sampleId) || mockSamples[0]
+
+const getSelectedAlgorithmKeys = (sampleId) => {
+  const sample = getSampleById(sampleId)
+  const allAlgorithms = sample?.algorithms || {}
+  const selected = new Set(selectedAlgorithms.value)
+  return accelerationOptions.value
+    .filter((opt) => selected.has(opt.value) && allAlgorithms[opt.value])
+    .map((opt) => opt.value)
+}
+
+const buildSampleAverageMetrics = (sampleId, keys, preferRealtime = false) => {
+  const sample = getSampleById(sampleId)
+  const allAlgorithms = sample?.algorithms || {}
+  const normalizedKeys = Array.isArray(keys) && keys.length ? keys : getSelectedAlgorithmKeys(sampleId)
+
+  let throughputSum = 0
+  let throughputCount = 0
+  let latencySum = 0
+  let latencyCount = 0
+  let gpuMemorySum = 0
+  let gpuMemoryCount = 0
+
+  normalizedKeys.forEach((key) => {
+    const dynamic = realtimeStats[sampleId]?.[key]
+    const fallback = allAlgorithms[key]
+
+    const throughput = Number(preferRealtime
+      ? (dynamic?.throughput ?? fallback?.avgThroughput ?? fallback?.throughput)
+      : (fallback?.avgThroughput ?? fallback?.throughput)
+    )
+    if (Number.isFinite(throughput)) {
+      throughputSum += throughput
+      throughputCount += 1
+    }
+
+    const avgLatency = Number(preferRealtime
+      ? (dynamic?.avgLatency ?? fallback?.avgLatency ?? fallback?.latency)
+      : (fallback?.avgLatency ?? fallback?.latency)
+    )
+    if (Number.isFinite(avgLatency)) {
+      latencySum += avgLatency
+      latencyCount += 1
+    }
+
+    const gpuMemory = Number(preferRealtime
+      ? (dynamic?.gpuMemory ?? fallback?.avgGpuMemory ?? fallback?.gpuMemory)
+      : (fallback?.avgGpuMemory ?? fallback?.gpuMemory)
+    )
+    if (Number.isFinite(gpuMemory)) {
+      gpuMemorySum += gpuMemory
+      gpuMemoryCount += 1
+    }
+  })
+
+  return {
+    throughput: throughputCount ? throughputSum / throughputCount : null,
+    avgLatency: latencyCount ? latencySum / latencyCount : null,
+    gpuMemory: gpuMemoryCount ? gpuMemorySum / gpuMemoryCount : null
+  }
+}
+
+const refreshSampleAverageSnapshot = (sampleId, preferRealtime = false, keys = undefined) => {
+  sampleAverageSnapshot[sampleId] = buildSampleAverageMetrics(sampleId, keys, preferRealtime)
+}
+
+const sampleAverageMetrics = computed(() => {
+  const sampleId = selectedSampleIndex.value
+  return sampleAverageSnapshot[sampleId] || buildSampleAverageMetrics(sampleId)
+})
+
+const getDisplaySampleAvgThroughput = () => {
+  const value = sampleAverageMetrics.value.throughput
+  return Number.isFinite(value) ? value.toFixed(2) : '--'
+}
+
+const getDisplaySampleAvgLatency = () => {
+  const value = sampleAverageMetrics.value.avgLatency
+  return Number.isFinite(value) ? value.toFixed(4) : '--'
+}
+
+const getDisplaySampleAvgGpuMemory = () => {
+  const value = sampleAverageMetrics.value.gpuMemory
+  return Number.isFinite(value) ? value.toFixed(2) : '--'
+}
+
 /* ───────── 流式输出 ───────── */
 
 const streamingData = reactive({ tokens: {}, active: {} })
+
+const clamp = (value, min, max) => Math.min(Math.max(value, min), max)
+
+const ensureRealtimeStat = (sampleId, key, fallback = {}) => {
+  if (!realtimeStats[sampleId]) {
+    realtimeStats[sampleId] = {}
+  }
+  if (!realtimeStats[sampleId][key]) {
+    const baseThroughput = Number(fallback.throughput)
+    const baseAvgLatency = Number(fallback.avgLatency)
+    const baseGpuMemory = Number(fallback.gpuMemory)
+    realtimeStats[sampleId][key] = {
+      throughput: Number.isFinite(baseThroughput) ? baseThroughput : 0,
+      avgLatency: Number.isFinite(baseAvgLatency) ? baseAvgLatency : 0,
+      gpuMemory: Number.isFinite(baseGpuMemory) ? baseGpuMemory : 0,
+      tokenCount: 0,
+      latencySum: 0,
+      startedAt: Date.now()
+    }
+  }
+  return realtimeStats[sampleId][key]
+}
+
+const bumpGpuMemory = (state, baseGpuMemory, progressRatio) => {
+  const base = Number(baseGpuMemory)
+  if (!Number.isFinite(base)) return
+
+  const current = Number(state.gpuMemory)
+  const target = base * (0.94 + progressRatio * 0.1)
+  const jitter = base * 0.015
+  const drift = (target - current) * 0.28
+  const next = current + drift + (Math.random() * 2 - 1) * jitter
+  state.gpuMemory = clamp(next, base * 0.88, base * 1.12)
+}
+
+const updateRealtimeStatOnToken = (sampleId, key, payload) => {
+  const state = ensureRealtimeStat(sampleId, key, {
+    throughput: payload.baseThroughput,
+    avgLatency: payload.baseAvgLatency,
+    gpuMemory: payload.baseGpuMemory
+  })
+  state.tokenCount += 1
+  state.latencySum += payload.charLatency
+  const elapsedSeconds = Math.max((Date.now() - state.startedAt) / 1000, 0.001)
+  state.throughput = state.tokenCount / elapsedSeconds
+  state.avgLatency = state.latencySum / state.tokenCount
+  bumpGpuMemory(state, payload.baseGpuMemory, payload.progressRatio)
+}
+
+const getDisplayThroughput = (sampleId, key, fallbackValue) => {
+  const value = realtimeStats[sampleId]?.[key]?.throughput
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return value.toFixed(2)
+  }
+  const fallback = Number(fallbackValue)
+  return Number.isFinite(fallback) ? fallback.toFixed(2) : fallbackValue
+}
+
+const getDisplayAvgLatency = (sampleId, key, fallbackValue) => {
+  const value = realtimeStats[sampleId]?.[key]?.avgLatency
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return value.toFixed(4)
+  }
+  const fallback = Number(fallbackValue)
+  return Number.isFinite(fallback) ? fallback.toFixed(4) : fallbackValue
+}
+
+const getDisplayGpuMemory = (sampleId, key, fallbackValue) => {
+  const value = realtimeStats[sampleId]?.[key]?.gpuMemory
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return value.toFixed(2)
+  }
+  const fallback = Number(fallbackValue)
+  return Number.isFinite(fallback) ? fallback.toFixed(2) : fallbackValue
+}
 
 const isStreaming = computed(() => {
   const sampleId = selectedSampleIndex.value
@@ -587,6 +752,10 @@ const startStreaming = () => {
   stopStreaming(sampleId) // only stop current sample's streaming
 
   const allAlgorithms = currentSample.value.algorithms || {}
+  const runningKeys = selectedAlgorithms.value.filter((key) => allAlgorithms[key]?.fullText)
+  if (!runningKeys.length) return
+  runningAlgorithmsBySample[sampleId] = [...runningKeys]
+  refreshSampleAverageSnapshot(sampleId, false, runningKeys)
   
   if (!streamingData.tokens[sampleId]) {
     streamingData.tokens[sampleId] = {}
@@ -596,13 +765,33 @@ const startStreaming = () => {
     streamTimerIds[sampleId] = []
   }
 
-  selectedAlgorithms.value.forEach((key) => {
+  runningKeys.forEach((key) => {
     const algo = allAlgorithms[key]
     if (!algo?.fullText) return
+    const baseThroughput = Number(algo.throughput)
+    const baseAvgLatency = Number(algo.avgLatency ?? algo.latency)
+    const baseGpuMemory = Number(algo.gpuMemory)
 
     const chars = [...algo.fullText]
     streamingData.tokens[sampleId][key] = []
     streamingData.active[sampleId][key] = true
+    const realtimeStat = ensureRealtimeStat(sampleId, key, {
+      throughput: baseThroughput,
+      avgLatency: baseAvgLatency,
+      gpuMemory: baseGpuMemory
+    })
+    realtimeStat.tokenCount = 0
+    realtimeStat.latencySum = 0
+    realtimeStat.startedAt = Date.now()
+    if (Number.isFinite(baseThroughput)) {
+      realtimeStat.throughput = baseThroughput
+    }
+    if (Number.isFinite(baseAvgLatency)) {
+      realtimeStat.avgLatency = baseAvgLatency
+    }
+    if (Number.isFinite(baseGpuMemory)) {
+      realtimeStat.gpuMemory = baseGpuMemory
+    }
     let idx = 0
 
     // 根据算法类型生成合理的延迟范围
@@ -616,12 +805,38 @@ const startStreaming = () => {
       if (idx < chars.length) {
         const charLatency = +(latencyRange[0] + Math.random() * (latencyRange[1] - latencyRange[0])).toFixed(4)
         streamingData.tokens[sampleId][key].push({ char: chars[idx], latency: charLatency })
+        const progressRatio = chars.length ? (idx + 1) / chars.length : 0
+        updateRealtimeStatOnToken(sampleId, key, {
+          baseThroughput,
+          baseAvgLatency,
+          baseGpuMemory,
+          charLatency,
+          progressRatio
+        })
         idx++
         const delay = 35 + Math.random() * 55
         const tid = setTimeout(streamNext, delay)
         streamTimerIds[sampleId].push(tid)
       } else {
         streamingData.active[sampleId][key] = false
+        const endedStat = realtimeStats[sampleId]?.[key]
+        if (endedStat && endedStat.tokenCount === 0) {
+          if (Number.isFinite(baseThroughput)) {
+            endedStat.throughput = baseThroughput
+          }
+          if (Number.isFinite(baseAvgLatency)) {
+            endedStat.avgLatency = baseAvgLatency
+          }
+          if (Number.isFinite(baseGpuMemory)) {
+            endedStat.gpuMemory = baseGpuMemory
+          }
+        }
+        const hasRunning = (runningAlgorithmsBySample[sampleId] || [])
+          .some((algoKey) => !!streamingData.active[sampleId]?.[algoKey])
+        if (!hasRunning) {
+          refreshSampleAverageSnapshot(sampleId, true, runningAlgorithmsBySample[sampleId])
+          delete runningAlgorithmsBySample[sampleId]
+        }
       }
     }
 
@@ -638,6 +853,13 @@ const resetStreamingState = () => {
       streamingData.tokens[sampleId][k] = []
     })
   }
+  if (realtimeStats[sampleId]) {
+    Object.keys(realtimeStats[sampleId]).forEach((k) => {
+      delete realtimeStats[sampleId][k]
+    })
+  }
+  delete sampleAverageSnapshot[sampleId]
+  delete runningAlgorithmsBySample[sampleId]
 }
 
 /* ───────── 样本选择 ───────── */
@@ -647,6 +869,9 @@ const onSampleChange = () => {
   if (!streamingData.tokens[sampleId]) {
     streamingData.tokens[sampleId] = {}
     streamingData.active[sampleId] = {}
+  }
+  if (!sampleAverageSnapshot[sampleId]) {
+    refreshSampleAverageSnapshot(sampleId)
   }
 }
 
@@ -672,7 +897,12 @@ const onParamChange = () => {
 }
 
 const onAlgorithmChange = () => {
-  // 切换算法不重置推理状态，已有的输出保留
+  const sampleId = selectedSampleIndex.value
+  const hasRunning = (runningAlgorithmsBySample[sampleId] || [])
+    .some((key) => !!streamingData.active[sampleId]?.[key])
+  if (!hasRunning) {
+    refreshSampleAverageSnapshot(sampleId)
+  }
 }
 
 /* ───────── 排名 state ───────── */
