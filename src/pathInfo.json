@@ -8,7 +8,7 @@
   "/src/view/biz/biz_inference_log/biz_inference_logForm.vue": "BizInferenceLogForm",
   "/src/view/biz/biz_inference_rank/biz_inference_rank.vue": "BizInferenceTask",
   "/src/view/biz/biz_inference_rank/biz_inference_rankForm.vue": "BizInferenceTaskForm",
-  "/src/view/biz/biz_inference_task/biz_inference_task.vue": "BizInferenceTask",
+  "/src/view/biz/biz_inference_task/biz_inference_task.vue": "Biz_inference_task",
   "/src/view/biz/biz_inference_task/biz_inference_taskForm.vue": "BizInferenceTaskForm",
   "/src/view/biz/biz_model/biz_model.vue": "BizModel",
   "/src/view/biz/biz_model/biz_modelForm.vue": "BizModelForm",

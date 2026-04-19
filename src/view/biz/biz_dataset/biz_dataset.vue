@@ -1,5 +1,17 @@
 <template>
-  <div>
+  <div class="dataset-page">
+    <div class="dataset-hero">
+      <div>
+        <p class="dataset-hero-eyebrow">Dataset Workspace</p>
+        <h2 class="dataset-hero-title">数据集管理</h2>
+        <p class="dataset-hero-desc">统一管理数据集资产、可见范围与样本内容，支撑多模态推理全流程。</p>
+      </div>
+      <div class="dataset-hero-metrics">
+        <span>资产治理</span>
+        <span>权限管控</span>
+        <span>样本联动</span>
+      </div>
+    </div>
     <div class="gva-search-box">
       <el-form ref="elSearchFormRef" :inline="true" :model="searchInfo" class="demo-form-inline"
         @keyup.enter="onSubmit">
@@ -25,7 +37,7 @@
         </template>
 
         <el-form-item>
-          <el-button type="primary" icon="search" @click="onSubmit">查询</el-button>
+          <el-button class="dataset-btn-primary" type="primary" icon="search" @click="onSubmit">查询</el-button>
           <el-button icon="refresh" @click="onReset">重置</el-button>
           <!-- <el-button link type="primary" icon="arrow-down" @click="showAllQuery = true"
             v-if="!showAllQuery">展开</el-button>
@@ -35,12 +47,12 @@
     </div>
     <div class="gva-table-box">
       <div class="gva-btn-list">
-        <el-button v-auth="btnAuth.add" type="primary" icon="plus" @click="openDialog()">新增</el-button>
-        <el-button v-auth="btnAuth.batchDelete" icon="delete" style="margin-left: 10px;"
+        <el-button class="dataset-btn-primary" v-auth="btnAuth.add" type="primary" icon="plus" @click="openDialog()">新增</el-button>
+        <el-button class="dataset-btn-danger" v-auth="btnAuth.batchDelete" icon="delete" style="margin-left: 10px;"
           :disabled="!multipleSelection.length" @click="onDelete">删除</el-button>
 
       </div>
-      <el-table ref="multipleTable" style="width: 100%" tooltip-effect="dark" :data="tableData" row-key="ID"
+      <el-table ref="multipleTable" class="dataset-table" style="width: 100%" tooltip-effect="dark" :data="tableData" row-key="ID"
         @selection-change="handleSelectionChange">
         <el-table-column type="selection" width="55" />
 
@@ -75,7 +87,7 @@
           @size-change="handleSizeChange" />
       </div>
     </div>
-    <el-drawer destroy-on-close :size="appStore.drawerSize" v-model="dialogFormVisible" :show-close="false"
+    <el-drawer class="dataset-drawer" destroy-on-close :size="appStore.drawerSize" v-model="dialogFormVisible" :show-close="false"
       :before-close="closeDialog">
       <template #header>
         <div class="flex justify-between items-center">
@@ -87,7 +99,7 @@
         </div>
       </template>
 
-      <el-form :model="formData" label-position="top" ref="elFormRef" :rules="rule" label-width="80px">
+      <el-form class="dataset-form" :model="formData" label-position="top" ref="elFormRef" :rules="rule" label-width="80px">
         <el-form-item label="数据集名称:" prop="datasetName">
           <el-input v-model="formData.datasetName" :clearable="true" placeholder="请输入数据集名称" />
         </el-form-item>
@@ -100,7 +112,7 @@
       </el-form>
     </el-drawer>
 
-    <el-drawer destroy-on-close :size="appStore.drawerSize" v-model="detailShow" :show-close="true"
+    <el-drawer class="dataset-drawer" destroy-on-close :size="appStore.drawerSize" v-model="detailShow" :show-close="true"
       :before-close="closeDetailShow" title="样本管理">
       <BizSample :dataset-id="detailForm.ID" />
     </el-drawer>
@@ -400,4 +412,246 @@ const formatScope = (val) => {
 
 </script>
 
-<style></style>
+<style scoped lang="scss">
+.dataset-page {
+  --page-bg: #f8fafc;
+  --panel-bg: #ffffff;
+  --panel-border: #e2e8f0;
+  --muted-text: #64748b;
+  --strong-text: #334155;
+  --accent: #3b82f6;
+  --accent-dark: #2563eb;
+  --accent-light: #eff6ff;
+  --line-soft: #e2e8f0;
+  --danger: #ef4444;
+
+  --hero-bg: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 60%, #bae6fd 100%);
+  --hero-text: #334155;
+  --hero-eyebrow: #64748b;
+  --hero-title-text: #0f172a;
+  --hero-desc-text: #475569;
+  --hero-glow: rgba(59, 130, 246, 0.1);
+  --hero-tag-text: #1d4ed8;
+  --hero-tag-border: rgba(37, 99, 235, 0.3);
+  --hero-tag-bg: rgba(59, 130, 246, 0.15);
+  
+  --input-bg: #ffffff;
+  --table-th-bg: #f1f5f9;
+  --table-tr-hover: #f8fafc;
+  --table-header-text: #475569;
+
+  min-height: 100%;
+  padding: 12px;
+  background: var(--page-bg);
+}
+
+.dataset-hero {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 22px 24px;
+  margin-bottom: 12px;
+  border: 1px solid var(--panel-border);
+  border-radius: 14px;
+  background: var(--hero-bg);
+  box-shadow: 0 8px 28px rgba(3, 8, 20, 0.15);
+  color: var(--hero-text);
+  position: relative;
+  overflow: hidden;
+}
+
+.dataset-hero::before {
+  content: '';
+  position: absolute;
+  top: -40%;
+  right: -8%;
+  width: 260px;
+  height: 260px;
+  border-radius: 50%;
+  background: var(--hero-glow);
+  filter: blur(50px);
+  pointer-events: none;
+}
+
+.dataset-hero-eyebrow {
+  margin: 0;
+  font-size: 12px;
+  letter-spacing: 1.4px;
+  color: var(--hero-eyebrow);
+  text-transform: uppercase;
+}
+
+.dataset-hero-title {
+  margin: 6px 0 0;
+  font-size: 24px;
+  color: var(--hero-title-text);
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.dataset-hero-desc {
+  margin: 8px 0 0;
+  color: var(--hero-desc-text);
+  font-size: 13px;
+}
+
+.dataset-hero-metrics {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.dataset-hero-metrics span {
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--hero-tag-border);
+  color: var(--hero-tag-text);
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--hero-tag-bg);
+  backdrop-filter: blur(4px);
+}
+
+:deep(.gva-search-box),
+:deep(.gva-table-box) {
+  border: 1px solid var(--line-soft);
+  border-radius: 14px;
+  background: var(--panel-bg);
+  box-shadow: 0 8px 24px rgba(3, 8, 20, 0.42);
+}
+
+:deep(.gva-search-box) {
+  padding: 14px 16px 8px;
+  margin-bottom: 12px;
+}
+
+:deep(.gva-table-box) {
+  padding: 12px 12px 8px;
+}
+
+:deep(.el-form-item__label),
+:deep(.el-table th.el-table__cell > .cell) {
+  color: var(--strong-text);
+}
+
+:deep(.el-input__wrapper),
+:deep(.el-textarea__inner),
+:deep(.el-select__wrapper) {
+  background: var(--input-bg);
+  box-shadow: inset 0 0 0 1px var(--line-soft);
+  border-radius: 10px;
+}
+
+:deep(.el-input__wrapper.is-focus),
+:deep(.el-select__wrapper.is-focused) {
+  box-shadow: 0 0 0 3px rgba(77, 135, 255, 0.2);
+}
+
+:deep(.el-input__inner),
+:deep(.el-textarea__inner),
+:deep(.el-select__placeholder),
+:deep(.el-select__selected-item) {
+  color: var(--strong-text);
+}
+
+.dataset-btn-primary {
+  border: none;
+  background: linear-gradient(92deg, var(--accent), var(--accent-dark));
+  box-shadow: 0 6px 16px rgba(77, 135, 255, 0.3);
+  color: white;
+  transition: all 0.2s ease;
+}
+
+.dataset-btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(77, 135, 255, 0.42);
+}
+
+.dataset-btn-danger {
+  border-color: rgba(248, 113, 113, 0.4);
+  color: #ffc4c4;
+  background: rgba(127, 29, 29, 0.4);
+}
+
+:deep(.dataset-table .el-table__header-wrapper th.el-table__cell) {
+  background: var(--table-th-bg);
+  color: var(--table-header-text);
+  font-weight: 600;
+}
+
+:deep(.dataset-table .el-table__body tr) {
+  background: var(--panel-bg);
+}
+
+:deep(.dataset-table .el-table__body tr:hover > td.el-table__cell) {
+  background: var(--table-tr-hover);
+}
+
+:deep(.dataset-table .el-table__cell) {
+  border-bottom-color: var(--line-soft);
+  color: var(--strong-text);
+}
+
+:deep(.gva-pagination) {
+  margin-top: 10px;
+  padding-bottom: 12px;
+}
+
+:deep(.dataset-drawer .el-drawer) {
+  background: var(--panel-bg);
+}
+
+:deep(.dataset-drawer .el-drawer__header) {
+  margin-bottom: 0;
+  border-bottom: 1px solid var(--line-soft);
+  color: var(--strong-text);
+}
+
+:deep(.dataset-drawer .el-drawer__body) {
+  color: var(--muted-text);
+}
+
+:deep(.dataset-form .el-form-item__label) {
+  color: var(--strong-text);
+}
+
+@media (max-width: 768px) {
+  .dataset-page { padding: 8px; }
+  .dataset-hero { flex-direction: column; align-items: flex-start; }
+  .dataset-hero-metrics { justify-content: flex-start; }
+  :deep(.gva-search-box) { padding: 12px 10px 0; }
+  :deep(.gva-table-box) { padding: 10px 8px 0; }
+}
+</style>
+
+<style>
+html.dark .dataset-page {
+  --page-bg: #1f2c46;
+  --panel-bg: #0f1d38;
+  --panel-border: rgba(108, 141, 198, 0.24);
+  --muted-text: #9baccc;
+  --strong-text: #e6edfb;
+  --accent: #4d87ff;
+  --accent-dark: #2f6edf;
+  --accent-light: rgba(77, 135, 255, 0.16);
+  --line-soft: rgba(108, 141, 198, 0.26);
+  --danger: #f87171;
+
+  --hero-bg: linear-gradient(135deg, #091830 0%, #10264b 60%, #17396b 100%);
+  --hero-text: #dde8ff;
+  --hero-eyebrow: rgba(188, 212, 255, 0.9);
+  --hero-title-text: #f3f7ff;
+  --hero-desc-text: rgba(214, 227, 255, 0.8);
+  --hero-glow: rgba(77, 135, 255, 0.2);
+  --hero-tag-text: #bfd4ff;
+  --hero-tag-border: rgba(112, 155, 255, 0.45);
+  --hero-tag-bg: rgba(77, 135, 255, 0.18);
+  
+  --input-bg: #0b1933;
+  --table-th-bg: #112546;
+  --table-tr-hover: #14294d;
+  --table-header-text: #e6edfb;
+}
+</style>

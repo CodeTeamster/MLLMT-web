@@ -4,7 +4,7 @@
 
 .el-button {
   font-weight: 400;
-  border-radius: 2px;
+  border-radius: 8px;
 }
 
 .gva-pagination {
@@ -71,9 +71,7 @@
   }
 }
 
-//   layout
-
-// table
+// layout
 .el-pagination {
   @apply mt-8;
   .btn-prev,
@@ -86,19 +84,33 @@
     }
   }
 }
+
 .el-menu {
   background-color: transparent !important;
   li {
     @apply my-1;
   }
 }
+
 .el-menu--vertical {
-  .el-menu-item {
-    border-radius: 2px;
-    &.is-active {
-      background-color: var(--el-color-primary) !important;
-      color: #fff !important;
-    }
+  .el-menu-item,
+  .el-sub-menu__title {
+    border-radius: 10px;
+    margin: 4px 0;
+    color: #55627a;
+    transition: background-color .2s ease, color .2s ease;
+  }
+
+  .el-menu-item:hover,
+  .el-sub-menu__title:hover {
+    background-color: #eef4ff !important;
+    color: #244da8 !important;
+  }
+
+  .el-menu-item.is-active {
+    background: linear-gradient(90deg, #3f6fd9 0%, #4f85ee 100%) !important;
+    color: #fff !important;
+    box-shadow: 0 6px 14px rgba(64, 111, 217, 0.22);
   }
 }
 
@@ -116,8 +128,8 @@
   }
 }
 
-.el-menu-item.is-active{
-  color: var(--el-color-primary)!important;
+.el-menu-item.is-active {
+  color: var(--el-color-primary) !important;
 }
 
 .el-sub-menu__title.el-tooltip__trigger,

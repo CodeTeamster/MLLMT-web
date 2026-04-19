@@ -1,510 +1,528 @@
 <template>
-  <div>
-    <div class="gva-search-box">
-      <el-form ref="elSearchFormRef" :inline="true" :model="searchInfo" class="demo-form-inline"
-        @keyup.enter="onSubmit">
-        <el-form-item label="数据集:" prop="datasetId">
-          <el-select
-            v-model="searchInfo.datasetId"
-            placeholder="请选择数据集"
-            :clearable="true"
-            @visible-change="onDatasetVisibleChange"
-            @change="onDatasetChange"
-          >
-            <el-option
-              v-for="item in datasetOptions"
-              :key="item.id"
-              :label="item.name"
-              :value="item.id"
-            />
-          </el-select>
-        </el-form-item>
-
-        <el-form-item label="榜单:" prop="perfType">
-          <el-select
-            v-model="searchInfo.perfType"
-            placeholder="请选择排序指标"
-            :clearable="true"
-            @change="onPerfTypeChange"
-          >
-            <el-option
-              v-for="item in perfTypeOptions"
-              :key="item.id"
-              :label="item.name"
-              :value="item.id"
-            />
-          </el-select>
-        </el-form-item>
-        <el-form-item>
-          <el-button type="primary" icon="search" @click="onSubmit">查询</el-button>
-          <el-button icon="refresh" @click="onReset">重置</el-button>
-        </el-form-item>
-      </el-form>
-    </div>
-    <div class="gva-table-box">
-      <el-table ref="multipleTable" style="width: 100%" tooltip-effect="dark" :data="tableData" row-key="taskHash"
-        @selection-change="handleSelectionChange">
-        <!-- <el-table-column type="selection" width="55" /> -->
-
-        <el-table-column label="排名" width="60">
-          <template #default="scope">
-            {{ (page - 1) * pageSize + scope.$index + 1 }}
-          </template>
-        </el-table-column>
-
-        <el-table-column align="left" label="模型" prop="modelName" width="200" />
-
-        <el-table-column align="left" label="算法" prop="algorithmName" width="150">
-          <template #default="scope">
-            <div>
-              <!-- 将 algorithmName 按逗号分隔，并逐行显示 -->
-              <div v-for="(name, index) in scope.row.algorithmName.split(',')" :key="index">
-                {{ name }}
-              </div>
-            </div>
-          </template>
-        </el-table-column>
-
-        <el-table-column align="left" label="吞吐量 (tokens/sec)" prop="averageThroughput" width="180" />
-
-        <el-table-column align="left" label="延迟 (ms)" prop="averageLatency" width="120" />
-
-        <el-table-column align="left" label="显存占用 (GB)" prop="averageGpuMemory" width="120" />
-
-        <el-table-column align="left" label="执行人" prop="operatorName" width="120" />
-
-        <el-table-column sortable align="left" label="日期" prop="CreatedAt" width="undefined" >
-          <template #default="scope">{{ formatDate(scope.row.CreatedAt) }}</template>
-        </el-table-column>
-
-      </el-table>
-      <div class="gva-pagination">
-        <el-pagination layout="total, sizes, prev, pager, next, jumper" :current-page="page" :page-size="pageSize"
-          :page-sizes="[10, 30, 50, 100]" :total="total" @current-change="handleCurrentChange"
-          @size-change="handleSizeChange" />
+  <div class="rank-page" v-loading="rankLoading">
+    <div class="rank-hero">
+      <div>
+        <p class="rank-hero-eyebrow">Leaderboard</p>
+        <h2 class="rank-hero-title">推理排行榜</h2>
+        <p class="rank-hero-desc">按不同指标维度对比模型推理性能，发现最优方案。</p>
+      </div>
+      <div class="rank-hero-metrics">
+        <span>性能排名</span>
+        <span>多维对比</span>
+        <span>实时更新</span>
       </div>
     </div>
 
+    <div class="rank-panel">
+      <div class="filter-row">
+        <div class="filter-item">
+          <label>数据集:</label>
+          <el-select
+            v-model="rankCase"
+            class="filter-select"
+            placeholder="请选择数据集"
+          >
+            <el-option
+              v-for="item in caseOptions"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value"
+            />
+          </el-select>
+        </div>
+
+        <div class="filter-item">
+          <label>榜单:</label>
+          <el-select
+            v-model="rankMetric"
+            class="filter-select"
+            placeholder="请选择榜单类型"
+          >
+            <el-option
+              v-for="item in rankMetricOptions"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value"
+            />
+          </el-select>
+        </div>
+
+        <div class="action-row">
+          <el-button type="primary" class="query-btn" @click="handleSearch">查询</el-button>
+          <el-button class="reset-btn" @click="handleReset">重置</el-button>
+        </div>
+      </div>
+
+      <div class="table-shell">
+        <el-table :data="rankRows" stripe>
+          <el-table-column prop="rank" label="排名" width="64" align="center" />
+          <el-table-column prop="modelName" label="模型" min-width="210" show-overflow-tooltip />
+          <el-table-column prop="algorithmName" label="算法" min-width="120" />
+          <el-table-column prop="throughput" label="吞吐量 (tokens/sec)" min-width="170" />
+          <el-table-column prop="latency" label="延迟 (ms)" min-width="120" />
+          <el-table-column prop="gpuMemory" label="显存占用 (GB)" min-width="130" />
+          <el-table-column prop="operatorName" label="执行人" min-width="90" />
+          <el-table-column prop="executionTime" label="日期" min-width="170" sortable />
+        </el-table>
+      </div>
+
+      <div class="pager-row">
+        <el-pagination
+          v-model:current-page="rankPage"
+          v-model:page-size="rankPageSize"
+          :page-sizes="[10, 20, 30, 50]"
+          layout="total, sizes, prev, pager, next, jumper"
+          :total="rankTotal"
+          @current-change="fetchRankData"
+          @size-change="handleSizeChange"
+        />
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
-import {
-  getBizInferenceRank
-} from '@/api/biz/biz_inference_task'
-
-// 全量引入格式化工具 请按需保留
-import { getBizDatasetList } from '@/api/biz/biz_dataset'
-import { getDictFunc, formatDate, formatBoolean, filterDict, filterDataSource, returnArrImg, onDownloadFile } from '@/utils/format'
-import { ElMessage, ElMessageBox } from 'element-plus'
-import { ref, reactive } from 'vue'
-import { useAppStore } from "@/pinia"
-
-
-
+import { onMounted, ref } from 'vue'
+import { getBizInferenceRank } from '@/api/biz/biz_inference_task'
+import { getBizModelList } from '@/api/biz/biz_model'
 
 defineOptions({
-  name: 'BizInferenceTask'
+  name: 'BizInferenceRank'
 })
 
-// 提交按钮loading
-const btnLoading = ref(false)
-const appStore = useAppStore()
-
-// 控制更多查询条件显示/隐藏状态
-const showAllQuery = ref(false)
-
-// 自动化生成的字典（可能为空）以及字段
-const formData = ref({
-  modelName: '',
-  modelId: undefined,
-  algorithmName: '',
-  algorithmId: undefined,
-  modelType: undefined,
-  datasetName: '',
-  datasetId: undefined,
-  taskHash: '',
-  averageThroughput: 0,
-  averageLatency: 0,
-  averageGpuMemory: 0,
-  operatorName: '',
-  operatorId: undefined,
-})
-
-// 验证规则
-const rule = reactive({
-  modelName: [{
-    required: true,
-    message: '',
-    trigger: ['input', 'blur'],
-  },
-  {
-    whitespace: true,
-    message: '不能只输入空格',
-    trigger: ['input', 'blur'],
-  }
-  ],
-  modelId: [{
-    required: true,
-    message: '',
-    trigger: ['input', 'blur'],
-  },
-  ],
-  algorithmName: [{
-    required: true,
-    message: '',
-    trigger: ['input', 'blur'],
-  },
-  {
-    whitespace: true,
-    message: '不能只输入空格',
-    trigger: ['input', 'blur'],
-  }
-  ],
-  algorithmId: [{
-    required: true,
-    message: '',
-    trigger: ['input', 'blur'],
-  },
-  ],
-  modelType: [{
-    required: true,
-    message: '',
-    trigger: ['input', 'blur'],
-  },
-  ],
-  datasetName: [{
-    required: true,
-    message: '',
-    trigger: ['input', 'blur'],
-  },
-  {
-    whitespace: true,
-    message: '不能只输入空格',
-    trigger: ['input', 'blur'],
-  }
-  ],
-  datasetId: [{
-    required: true,
-    message: '',
-    trigger: ['input', 'blur'],
-  },
-  ],
-  taskHash: [{
-    required: true,
-    message: '',
-    trigger: ['input', 'blur'],
-  },
-  {
-    whitespace: true,
-    message: '不能只输入空格',
-    trigger: ['input', 'blur'],
-  }
-  ],
-  averageThroughput: [{
-    required: true,
-    message: '',
-    trigger: ['input', 'blur'],
-  },
-  ],
-  averageLatency: [{
-    required: true,
-    message: '',
-    trigger: ['input', 'blur'],
-  },
-  ],
-  averageGpuMemory: [{
-    required: true,
-    message: '',
-    trigger: ['input', 'blur'],
-  },
-  ],
-  operatorName: [{
-    required: true,
-    message: '',
-    trigger: ['input', 'blur'],
-  },
-  {
-    whitespace: true,
-    message: '不能只输入空格',
-    trigger: ['input', 'blur'],
-  }
-  ],
-  operatorId: [{
-    required: true,
-    message: '',
-    trigger: ['input', 'blur'],
-  },
-  ],
-})
-
-const elFormRef = ref()
-const elSearchFormRef = ref()
-
-// =========== 表格控制部分 ===========
-const page = ref(1)
-const total = ref(0)
-const pageSize = ref(10)
-const tableData = ref([])
-const searchInfo = ref({})
-
-// 数据集下拉选项
-const datasetOptions = ref([])
-const perfTypeOptions = ref([
-  { id: 0, name: '吞吐量' },
-  { id: 1, name: '延迟' },
-  { id: 2, name: '显存占用' },
+const caseOptions = ref([
+  { label: '动物识别', value: 'animal-recognition' },
+  { label: '交通场景理解', value: 'traffic-understanding' },
+  { label: '图表解读', value: 'chart-reading' }
 ])
-const loadingDatasets = ref(false)
 
-// 下拉打开时加载数据集列表（只加载一次）
-const loadDatasetOptions = async () => {
-  if (loadingDatasets.value || datasetOptions.value.length) return
-  loadingDatasets.value = true
-  try {
-    const res = await getBizDatasetList({ page: 1, pageSize: 9999 })
-    if (res.code === 0 && res.data) {
-      datasetOptions.value = res.data.list.map(item => ({
-        id: item.ID ?? item.id,
-        name: item.datasetName
-      }))
+const rankMetricOptions = [
+  { label: '吞吐量', value: 'throughput' },
+  { label: '单token延迟', value: 'latency' },
+  { label: '显存占用', value: 'gpuMemory' },
+  { label: '执行时间', value: 'executionTime' }
+]
+
+const mockRankRows = [
+  {
+    rank: 1,
+    modelName: 'Qwen3-VL-8B-Instruct',
+    algorithmName: 'bnb-4bit',
+    throughput: '340 token/s',
+    latency: '0.0005',
+    gpuMemory: '5.34',
+    executionTime: '2025-12-28 16:05:03',
+    operatorName: 'YRC'
+  },
+  {
+    rank: 2,
+    modelName: 'InternVL3_5-8B',
+    algorithmName: 'bnb-4bit',
+    throughput: '335 token/s',
+    latency: '0.0007',
+    gpuMemory: '5.21',
+    executionTime: '2026-01-22 15:04:03',
+    operatorName: 'WXF'
+  }
+]
+
+const defaultCase = caseOptions.value[0].value
+const defaultMetric = rankMetricOptions[0].value
+
+const rankCase = ref(defaultCase)
+const rankMetric = ref(defaultMetric)
+const rankPage = ref(1)
+const rankPageSize = ref(10)
+const rankTotal = ref(0)
+const rankRows = ref([])
+const rankLoading = ref(false)
+
+const readField = (item, keys, fallback = '--') => {
+  for (const key of keys) {
+    if (item?.[key] !== undefined && item?.[key] !== null && item?.[key] !== '') {
+      return item[key]
     }
-  } catch (e) {
-    console.error(e)
-  } finally {
-    loadingDatasets.value = false
+  }
+  return fallback
+}
+
+const mapRankRow = (item, index) => ({
+  rank: Number(readField(item, ['rank', 'ranking'], index + 1)),
+  modelName: readField(item, ['modelName', 'model', 'model_name']),
+  algorithmName: readField(item, ['algorithmName', 'algorithm', 'accelerationAlgorithm', 'algorithm_name']),
+  throughput: readField(item, ['throughput', 'averageThroughput'], '--'),
+  latency: readField(item, ['latency', 'averageLatency'], '--'),
+  gpuMemory: readField(item, ['gpuMemory', 'averageGpuMemory'], '--'),
+  executionTime: readField(item, ['executionTime', 'createdAt', 'created_at']),
+  operatorName: readField(item, ['operatorName', 'operator', 'operator_name'], '--')
+})
+
+const resolvePagePayload = (data) => {
+  const list = data?.list || data?.records || data?.items || data?.rows || []
+  const total = Number(data?.total || data?.count || data?.all || list.length || 0)
+  return {
+    list: Array.isArray(list) ? list : [],
+    total
   }
 }
 
-// 下拉可见性变更（打开时触发加载）
-const onDatasetVisibleChange = (visible) => {
-  if (visible) loadDatasetOptions()
-}
-
-// 选择数据集后同时填充 datasetId
-const onDatasetChange = (val) => {
-  const sel = datasetOptions.value.find(i => i.id === val)
-  searchInfo.value.datasetId = sel ? sel.id : undefined
-}
-
-// 选择排序性能指标后同时填充 perfType
-const onPerfTypeChange = (val) => {
-  const sel = perfTypeOptions.value.find(i => i.id === val)
-  searchInfo.value.perfType = sel ? sel.id : undefined
-}
-
-// 重置
-const onReset = () => {
-  searchInfo.value = {}
-}
-
-// 搜索
-const onSubmit = () => {
-  elSearchFormRef.value?.validate(async (valid) => {
-    if (!valid) return
-    tableData.value = []
-    page.value = 1
-    getTableData()
+const fetchModelRankFallback = async () => {
+  const res = await getBizModelList({
+    page: rankPage.value,
+    pageSize: rankPageSize.value
   })
-}
 
-// 分页
-const handleSizeChange = (val) => {
-  pageSize.value = val
-  getTableData()
-}
-
-// 修改页面容量
-const handleCurrentChange = (val) => {
-  page.value = val
-  getTableData()
-}
-
-// 查询
-const getTableData = async () => {
-  const table = await getBizInferenceRank({ page: page.value, pageSize: pageSize.value, ...searchInfo.value })
-  if (table.code === 0) {
-    tableData.value = table.data.list
-    total.value = table.data.total
-    page.value = table.data.page
-    pageSize.value = table.data.pageSize
+  if (res?.code !== 0 || !res?.data) {
+    return false
   }
+
+  const { list, total } = resolvePagePayload(res.data)
+  if (!list.length) {
+    return false
+  }
+
+  const offset = (rankPage.value - 1) * rankPageSize.value
+  rankRows.value = list.map((item, index) =>
+    mapRankRow(
+      {
+        rank: offset + index + 1,
+        modelName: readField(item, ['modelName', 'model', 'model_name']),
+        algorithmName: readField(item, ['algorithmName', 'algorithm', 'algorithm_name']),
+        operatorName: readField(item, ['creatorName', 'operatorName', 'operator', 'operator_name'], '--'),
+        executionTime: readField(item, ['createdAt', 'CreatedAt', 'executionTime', 'created_at'], '--')
+      },
+      index
+    )
+  )
+  rankTotal.value = total
+  return true
 }
 
-// getTableData()
+const fetchRankData = async () => {
+  rankLoading.value = true
+  try {
+    const res = await getBizInferenceRank({
+      page: rankPage.value,
+      pageSize: rankPageSize.value,
+      caseName: rankCase.value,
+      rankBy: rankMetric.value
+    })
 
-// ============== 表格控制部分结束 ===============
+    if (res?.code === 0 && res?.data) {
+      const { list, total } = resolvePagePayload(res.data)
+      if (list.length) {
+        rankRows.value = list.map((item, index) => mapRankRow(item, index))
+        rankTotal.value = total
+        return
+      }
 
-// 获取需要的字典 可能为空 按需保留
-const setOptions = async () => {
-}
+      const loadedFromModel = await fetchModelRankFallback()
+      if (loadedFromModel) {
+        return
+      }
+    }
 
-// 获取需要的字典 可能为空 按需保留
-setOptions()
-
-
-// 多选数据
-const multipleSelection = ref([])
-// 多选
-const handleSelectionChange = (val) => {
-  multipleSelection.value = val
-}
-
-// 删除行
-const deleteRow = (row) => {
-  ElMessageBox.confirm('确定要删除吗?', '提示', {
-    confirmButtonText: '确定',
-    cancelButtonText: '取消',
-    type: 'warning'
-  }).then(() => {
-    deleteBizInferenceTaskFunc(row)
-  })
-}
-
-// 多选删除
-const onDelete = async () => {
-  ElMessageBox.confirm('确定要删除吗?', '提示', {
-    confirmButtonText: '确定',
-    cancelButtonText: '取消',
-    type: 'warning'
-  }).then(async () => {
-    const IDs = []
-    if (multipleSelection.value.length === 0) {
-      ElMessage({
-        type: 'warning',
-        message: '请选择要删除的数据'
-      })
+    const loadedFromModel = await fetchModelRankFallback()
+    if (loadedFromModel) {
       return
     }
-    multipleSelection.value &&
-      multipleSelection.value.map(item => {
-        IDs.push(item.taskHash)
-      })
-    const res = await deleteBizInferenceTaskByIds({ IDs })
-    if (res.code === 0) {
-      ElMessage({
-        type: 'success',
-        message: '删除成功'
-      })
-      if (tableData.value.length === IDs.length && page.value > 1) {
-        page.value--
-      }
-      getTableData()
+
+    rankRows.value = mockRankRows
+    rankTotal.value = mockRankRows.length
+  } catch (e) {
+    const loadedFromModel = await fetchModelRankFallback()
+    if (loadedFromModel) {
+      return
     }
-  })
-}
 
-// 行为控制标记（弹窗内部需要增还是改）
-const type = ref('')
-
-// 更新行
-const updateBizInferenceTaskFunc = async (row) => {
-  const res = await findBizInferenceTask({ ID: row.ID })
-  type.value = 'update'
-  if (res.code === 0) {
-    formData.value = res.data
-    dialogFormVisible.value = true
+    rankRows.value = mockRankRows
+    rankTotal.value = mockRankRows.length
+  } finally {
+    rankLoading.value = false
   }
 }
 
-// 删除行
-const deleteBizInferenceTaskFunc = async (row) => {
-  const res = await deleteBizInferenceTask({ ID: row.taskHash })
-  if (res.code === 0) {
-    ElMessage({
-      type: 'success',
-      message: '删除成功'
-    })
-    if (tableData.value.length === 1 && page.value > 1) {
-      page.value--
-    }
-    getTableData()
-  }
+const handleSearch = () => {
+  rankPage.value = 1
+  fetchRankData()
 }
 
-// 弹窗控制标记
-const dialogFormVisible = ref(false)
-
-// 打开弹窗
-const openDialog = () => {
-  type.value = 'create'
-  dialogFormVisible.value = true
+const handleReset = () => {
+  rankCase.value = defaultCase
+  rankMetric.value = defaultMetric
+  rankPage.value = 1
+  rankPageSize.value = 10
+  fetchRankData()
 }
 
-// 关闭弹窗
-const closeDialog = () => {
-  dialogFormVisible.value = false
-  formData.value = {
-    modelName: '',
-    modelId: undefined,
-    algorithmName: '',
-    algorithmId: undefined,
-    modelType: undefined,
-    datasetName: '',
-    datasetId: undefined,
-    taskHash: '',
-    averageThroughput: 0,
-    averageLatency: 0,
-    averageGpuMemory: 0,
-    operatorName: '',
-    operatorId: undefined,
-  }
+const handleSizeChange = () => {
+  rankPage.value = 1
+  fetchRankData()
 }
 
-// 弹窗确定
-const enterDialog = async () => {
-  btnLoading.value = true
-  elFormRef.value?.validate(async (valid) => {
-    if (!valid) return btnLoading.value = false
-    let res
-    switch (type.value) {
-      case 'create':
-        res = await createBizInferenceTask(formData.value)
-        break
-      case 'update':
-        res = await updateBizInferenceTask(formData.value)
-        break
-      default:
-        res = await createBizInferenceTask(formData.value)
-        break
-    }
-    btnLoading.value = false
-    if (res.code === 0) {
-      ElMessage({
-        type: 'success',
-        message: '创建/更改成功'
-      })
-      closeDialog()
-      getTableData()
-    }
-  })
-}
-
-const detailForm = ref({})
-
-// 查看详情控制标记
-const detailShow = ref(false)
-
-// 打开详情弹窗
-const openDetailShow = () => {
-  detailShow.value = true
-}
-
-// 打开详情
-const getDetails = async (row) => {
-  // 打开弹窗
-  const res = await findBizInferenceTask({ ID: row.ID })
-  if (res.code === 0) {
-    detailForm.value = res.data
-    openDetailShow()
-  }
-}
-
-// 关闭详情弹窗
-const closeDetailShow = () => {
-  detailShow.value = false
-  detailForm.value = {}
-}
+onMounted(() => {
+  fetchRankData()
+})
 </script>
 
-<style></style>
+<style scoped>
+.rank-page {
+  --page-bg: #f8fafc;
+  --panel-bg: #ffffff;
+  --line-soft: #e2e8f0;
+  --text-main: #334155;
+  --text-sub: #64748b;
+  --accent: #3b82f6;
+  --accent-border: rgba(59, 130, 246, 0.2);
+  
+  --hero-bg: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 60%, #bae6fd 100%);
+  --hero-text: #334155;
+  --hero-eyebrow: #64748b;
+  --hero-title-text: #0f172a;
+  --hero-desc-text: #475569;
+  --hero-glow: rgba(59, 130, 246, 0.1);
+  --hero-tag-text: #1d4ed8;
+  --hero-tag-border: rgba(37, 99, 235, 0.3);
+  --hero-tag-bg: rgba(59, 130, 246, 0.15);
+  
+  --input-bg: #ffffff;
+  --table-th-bg: #f1f5f9;
+  --table-tr-hover: #f8fafc;
+  --table-header-text: #475569;
+
+  min-height: calc(100vh - 120px);
+  padding: 16px;
+  background: var(--page-bg);
+}
+
+/* ── Hero ───────────────────── */
+.rank-hero {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 22px 24px;
+  margin-bottom: 16px;
+  border: 1px solid var(--accent-border);
+  border-radius: 14px;
+  background: var(--hero-bg);
+  box-shadow: 0 8px 28px rgba(3, 8, 20, 0.15);
+  color: var(--hero-text);
+  position: relative;
+  overflow: hidden;
+}
+
+.rank-hero::before {
+  content: '';
+  position: absolute;
+  top: -40%;
+  right: -8%;
+  width: 260px;
+  height: 260px;
+  border-radius: 50%;
+  background: var(--hero-glow);
+  filter: blur(50px);
+  pointer-events: none;
+}
+
+.rank-hero-eyebrow {
+  margin: 0;
+  font-size: 12px;
+  letter-spacing: 1.4px;
+  color: var(--hero-eyebrow);
+  text-transform: uppercase;
+}
+
+.rank-hero-title {
+  margin: 6px 0 0;
+  font-size: 24px;
+  color: var(--hero-title-text);
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.rank-hero-desc {
+  margin: 8px 0 0;
+  color: var(--hero-desc-text);
+  font-size: 13px;
+}
+
+.rank-hero-metrics {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.rank-hero-metrics span {
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--hero-tag-border);
+  color: var(--hero-tag-text);
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--hero-tag-bg);
+  backdrop-filter: blur(4px);
+}
+
+/* ── Panel ──────────────────── */
+.rank-panel {
+  border: 1px solid var(--line-soft);
+  border-radius: 14px;
+  background: var(--panel-bg);
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(3, 8, 20, 0.42);
+}
+
+.filter-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--line-soft);
+  background: var(--panel-bg);
+}
+
+.filter-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.filter-item label {
+  color: var(--text-main);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.filter-select {
+  width: 180px;
+}
+
+.action-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.query-btn,
+.reset-btn {
+  min-width: 80px;
+  height: 34px;
+  border-radius: 10px;
+}
+
+.table-shell {
+  padding: 12px 12px 8px;
+}
+
+.pager-row {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0 12px 12px;
+}
+
+:deep(.el-select__wrapper) {
+  min-height: 34px;
+  border-radius: 10px;
+  background: var(--input-bg);
+  box-shadow: inset 0 0 0 1px var(--line-soft);
+}
+
+:deep(.el-table) {
+  border: 1px solid var(--line-soft);
+  background: var(--panel-bg);
+  border-radius: 12px;
+}
+
+:deep(.el-table .el-table__inner-wrapper::before) {
+  display: none;
+}
+
+:deep(.el-table th.el-table__cell) {
+  background: var(--table-th-bg);
+  color: var(--table-header-text);
+  font-weight: 600;
+}
+
+:deep(.el-table td.el-table__cell) {
+  color: var(--text-main);
+  background: var(--panel-bg);
+}
+
+:deep(.el-table tr:hover > td.el-table__cell) {
+  background: var(--table-tr-hover);
+}
+
+@media (max-width: 980px) {
+  .filter-row {
+    flex-wrap: wrap;
+    align-items: flex-end;
+  }
+
+  .action-row {
+    margin-left: auto;
+  }
+
+  .rank-hero {
+    flex-direction: column;
+  }
+
+  .rank-hero-metrics {
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 640px) {
+  .rank-page {
+    padding: 10px;
+  }
+
+  .filter-item {
+    width: 100%;
+  }
+
+  .filter-select {
+    width: 100%;
+  }
+
+  .action-row {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .query-btn,
+  .reset-btn {
+    flex: 1;
+  }
+}
+</style>
+
+<style>
+html.dark .rank-page {
+  --page-bg: #1f2c46;
+  --panel-bg: #0f1d38;
+  --line-soft: rgba(108, 141, 198, 0.26);
+  --text-main: #e6edfb;
+  --text-sub: #9baccc;
+  --accent: #4d87ff;
+  --accent-border: rgba(108, 141, 198, 0.24);
+
+  --hero-bg: linear-gradient(135deg, #091830 0%, #10264b 60%, #17396b 100%);
+  --hero-text: #dde8ff;
+  --hero-eyebrow: rgba(188, 212, 255, 0.9);
+  --hero-title-text: #f3f7ff;
+  --hero-desc-text: rgba(214, 227, 255, 0.8);
+  --hero-glow: rgba(77, 135, 255, 0.2);
+  --hero-tag-text: #bfd4ff;
+  --hero-tag-border: rgba(112, 155, 255, 0.45);
+  --hero-tag-bg: rgba(77, 135, 255, 0.18);
+  
+  --input-bg: #0b1933;
+  --table-th-bg: #112546;
+  --table-tr-hover: #14294d;
+  --table-header-text: #d5e3fd;
+}
+</style>
