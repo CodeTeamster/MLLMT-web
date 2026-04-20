@@ -1,0 +1,4 @@
+/*! 
+ Build based on gin-vue-admin 
+ Time : 1776703517000 */
+import{o as t,c as e,a,D as s,e as i,Q as l,n as d}from"./087AC4D233B64EB0index.BYHbN3vy.js";const o={key:0,class:"flex justify-between items-center"},r={class:"text-sm font-semibold tracking-tight text-black dark:text-white"},c={key:0,class:"text-xs text-black/60 dark:text-white/60 hover:text-active cursor-pointer"},n={__name:"card",props:{title:{type:String,default:""},showAction:{type:Boolean,default:!1},customClass:{type:String,default:""},withoutPadding:{type:Boolean,default:!1}},setup:n=>(x,u)=>(t(),e("div",{class:d(["rounded-xl border border-black/10 bg-white text-black/80 dark:text-slate-400 dark:bg-slate-900 dark:text-white/80",[n.customClass||"",n.withoutPadding?"p-0":"p-4"]])},[n.title?(t(),e("div",o,[a("div",r,s(n.title),1),n.showAction?(t(),e("div",c," 查看更多 ")):i("",!0)])):i("",!0),a("div",{class:d(n.title?"mt-3":"")},[l(x.$slots,"default")],2)],2))};export{n as default};

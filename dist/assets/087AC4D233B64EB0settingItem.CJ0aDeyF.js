@@ -1,0 +1,4 @@
+/*! 
+ Build based on gin-vue-admin 
+ Time : 1776703517000 */
+import{aS as e,K as s,R as a,o as t,c as l,a as i,D as o,Q as r,S as n}from"./087AC4D233B64EB0index.BYHbN3vy.js";import{_ as c}from"./087AC4D233B64EB0_plugin-vue_export-helper.BCo6x5W8.js";const m={class:"gva-theme-setting-item"},p={class:"flex items-center gap-2"},v={class:"gva-theme-setting-label"},f={class:"flex items-center setting-controls"},g=c(Object.assign({name:"SettingItem"},{__name:"settingItem",props:{label:{type:String,required:!0}},setup(c){e(e=>({v568c96f9:d.value,v32a8bfac:_.value}));const g=s(),{config:u}=a(g),d=n(()=>u.value.primaryColor),_=n(()=>u.value.primaryColor+"40");return(e,s)=>(t(),l("div",m,[i("div",p,[i("span",v,o(c.label),1),r(e.$slots,"suffix",{},void 0,!0)]),i("div",f,[r(e.$slots,"default",{},void 0,!0)])]))}}),[["__scopeId","data-v-a098f813"]]);export{g as default};

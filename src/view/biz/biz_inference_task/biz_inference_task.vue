@@ -328,17 +328,17 @@
 </template>
 
 <script setup>
-import { computed, reactive, ref, watch, onBeforeUnmount } from 'vue'
+import { computed, reactive, ref, watch, onMounted, onActivated, onBeforeUnmount } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import {
   deleteBizInferenceTask,
-  getBizInferenceRank,
-  getBizInferenceTaskList,
-  getRealtimeVisualization
+  getBizInferenceTaskList
 } from '@/api/biz/biz_inference_task'
+import { addInferenceRecord, getHistoryRecords, getRankRecords, deleteInferenceRecord, formatTimestamp } from '@/utils/inferenceRecords'
 
 const route = useRoute()
+const router = useRouter()
 const currentMenuTitle = computed(() => String(route.meta?.title || ''))
 
 const isHistoryOnly = computed(() => currentMenuTitle.value.includes('推理任务记录'))
@@ -516,8 +516,8 @@ const mockRankRows = [
 ]
 
 const mockHistoryRows = [
-  { id: 'm-1', taskHash: '89h8912d', modelName: 'Qwen3-VL-8B-Instruct', testCase: '动物识别', algorithms: ['unquantized', 'bnb-4bit', 'bnb-8bit'], executionTime: '2025-12-28 16:05:03', operatorName: 'YRC' },
-  { id: 'm-2', taskHash: 'e9a79f34x', modelName: 'InternVL3_5-8B', testCase: '动物识别', algorithms: ['unquantized', 'bnb-4bit'], executionTime: '2026-01-22 15:04:03', operatorName: 'WXF' }
+  { id: 'm-1', taskHash: '89h8912d', modelName: 'Qwen3-VL-8B-Instruct', modelValue: 'qwen2.5-vl-7b-instruct', testCase: '动物识别', testCaseValue: 1, algorithms: ['unquantized', 'bnb-4bit', 'bnb-8bit'], algorithmValue: 'unquantized', executionTime: '2025-12-28 16:05:03', operatorName: 'YRC' },
+  { id: 'm-2', taskHash: 'e9a79f34x', modelName: 'InternVL3_5-8B', modelValue: 'qwen2.5-vl-3b-instruct', testCase: '动物识别', testCaseValue: 1, algorithms: ['unquantized', 'bnb-4bit'], algorithmValue: 'bnb-4bit', executionTime: '2026-01-22 15:04:03', operatorName: 'WXF' }
 ]
 
 /* ───────── 实时推理 state ───────── */
@@ -529,6 +529,16 @@ const caseOptions = ref(defaultCaseOptions)
 const selectedModel = ref(defaultModelOptions[0].value)
 const selectedAlgorithms = ref(defaultAccelerationOptions.map((i) => i.value))
 const loading = ref(false)
+
+/* ───────── 当前登录用户名（用于记录） ───────── */
+const getCurrentUser = () => {
+  try {
+    const info = JSON.parse(localStorage.getItem('userInfo') || '{}')
+    return info?.userName || info?.nickName || 'User'
+  } catch {
+    return 'User'
+  }
+}
 
 const selectedSampleIndex = ref(1)
 const sampleIndexInput = ref('')
@@ -837,6 +847,23 @@ const startStreaming = () => {
           refreshSampleAverageSnapshot(sampleId, true, runningAlgorithmsBySample[sampleId])
           delete runningAlgorithmsBySample[sampleId]
         }
+        // ── Persist this run result to localStorage ──
+        const finalStat = realtimeStats[sampleId]?.[key]
+        const modelOpt = modelOptions.value.find((m) => m.value === selectedModel.value)
+        const algoOpt = accelerationOptions.value.find((a) => a.value === key)
+        const caseLabelVal = currentSample.value
+        addInferenceRecord({
+          modelName: modelOpt?.label || selectedModel.value,
+          modelValue: selectedModel.value,
+          testCase: caseLabelVal?.label || caseLabelVal?.index || '',
+          testCaseValue: String(sampleId),
+          algorithmName: algoOpt?.label || key,
+          algorithmValue: key,
+          throughput: finalStat?.throughput ?? baseThroughput,
+          latency: finalStat?.avgLatency ?? baseAvgLatency,
+          gpuMemory: finalStat?.gpuMemory ?? baseGpuMemory,
+          operatorName: getCurrentUser()
+        })
       }
     }
 
@@ -979,7 +1006,7 @@ const mapRankRow = (item, index) => ({
   throughput: `${readField(item, ['throughput', 'averageThroughput'], '--')} token/s`,
   latency: `${readField(item, ['latency', 'averageLatency'], '--')} s`,
   gpuMemory: `${readField(item, ['gpuMemory', 'averageGpuMemory'], '--')} G`,
-  executionTime: readField(item, ['executionTime', 'createdAt', 'created_at']),
+  executionTime: formatTimestamp(readField(item, ['executionTime', 'createdAt', 'created_at', 'CreatedAt'])),
   operatorName: readField(item, ['operatorName', 'operator', 'operator_name'], '--'),
   score: buildRankMetricValue(item)
 })
@@ -988,9 +1015,12 @@ const mapHistoryRow = (item) => ({
   id: readField(item, ['ID', 'id', 'taskId'], ''),
   taskHash: readField(item, ['taskHash', 'taskNo', 'taskCode', 'task_hash'], '--'),
   modelName: readField(item, ['modelName', 'model', 'model_name'], '--'),
+  modelValue: readField(item, ['modelValue'], ''),
   testCase: readField(item, ['testCase', 'datasetName', 'caseName', 'dataset_name'], toCaseLabel(historyCase.value)),
+  testCaseValue: readField(item, ['testCaseValue'], ''),
   algorithms: normalizeAlgorithmList(readField(item, ['accelerationAlgorithms', 'algorithmName', 'algorithm', 'algorithm_name'], '')),
-  executionTime: readField(item, ['executionTime', 'createdAt', 'created_at'], '--'),
+  algorithmValue: readField(item, ['algorithmValue'], ''),
+  executionTime: formatTimestamp(readField(item, ['executionTime', 'createdAt', 'created_at', 'CreatedAt'], '--')),
   operatorName: readField(item, ['operatorName', 'operator', 'operator_name'], '--')
 })
 
@@ -1017,16 +1047,11 @@ const fetchRealtimeData = async () => {
 const fetchRankData = async () => {
   rankLoading.value = true
   try {
-    const res = await getBizInferenceRank({
-      page: rankPage.value,
-      pageSize: rankPageSize.value,
-      caseName: rankCase.value,
-      rankBy: rankMetric.value
-    })
-    if (res?.code === 0 && res?.data) {
-      const { list, total } = resolvePagePayload(res.data, mockRankRows)
-      rankRows.value = list.map((item, index) => mapRankRow(item, index))
-      rankTotal.value = total
+    // First try localStorage (records from actual inference runs)
+    const localRecords = getRankRecords(rankMetric.value)
+    if (localRecords.length) {
+      rankRows.value = localRecords
+      rankTotal.value = localRecords.length
       return
     }
     rankRows.value = mockRankRows
@@ -1048,18 +1073,26 @@ const fetchHistoryData = async () => {
       caseName: historyCase.value
     })
     if (res?.code === 0 && res?.data) {
-      const { list, total } = resolvePagePayload(res.data, mockHistoryRows)
-      historyRows.value = list.map((item) => mapHistoryRow(item))
-      historyTotal.value = total
-      return
+      const { list, total } = resolvePagePayload(res.data, [])
+      if (list.length) {
+        historyRows.value = list.map((item) => mapHistoryRow(item))
+        historyTotal.value = total
+        return
+      }
     }
-    historyRows.value = mockHistoryRows
-    historyTotal.value = mockHistoryRows.length
   } catch (_e) {
-    historyRows.value = mockHistoryRows
-    historyTotal.value = mockHistoryRows.length
+    // fall through to localStorage
   } finally {
     historyLoading.value = false
+  }
+  // Use localStorage records as source of truth
+  const localRecords = getHistoryRecords()
+  if (localRecords.length) {
+    historyRows.value = localRecords
+    historyTotal.value = localRecords.length
+  } else {
+    historyRows.value = mockHistoryRows
+    historyTotal.value = mockHistoryRows.length
   }
 }
 
@@ -1067,40 +1100,202 @@ const refreshRankData = () => { rankPage.value = 1; fetchRankData() }
 const refreshHistoryData = () => { historyPage.value = 1; fetchHistoryData() }
 
 const viewHistoryRow = (row) => {
-  historyDetail.value = {
-    taskHash: row.taskHash,
-    modelName: row.modelName,
-    testCase: row.testCase,
-    algorithms: row.algorithms,
-    executionTime: row.executionTime,
-    operatorName: row.operatorName
+  // 将预填参数写入 sessionStorage，这样即使 keep-alive 组件重新激活也能获取到
+  const prefill = {}
+  if (row.modelValue) prefill.model = row.modelValue
+  if (row.testCaseValue) prefill.sample = row.testCaseValue
+  if (row.algorithmValue) prefill.algo = row.algorithmValue
+  else if (row.algorithms && row.algorithms.length) prefill.algo = row.algorithms[0]
+  try {
+    sessionStorage.setItem(PREFILL_KEY, JSON.stringify(prefill))
+  } catch { /* ignore */ }
+
+  // 动态查找“多模态大模型推理”页面路由
+  const inferenceRoute = findInferenceRoute()
+  if (inferenceRoute?.name) {
+    router.push({ name: inferenceRoute.name }).catch(() => {
+      // 同路由导航失败则直接展示详情弹窗
+      historyDetail.value = {
+        taskHash: row.taskHash || '--',
+        modelName: row.modelName || '--',
+        testCase: row.testCase || '--',
+        algorithms: row.algorithms || [],
+        executionTime: row.executionTime || '--',
+        operatorName: row.operatorName || '--'
+      }
+      historyDetailVisible.value = true
+    })
+  } else {
+    // 找不到路由：展示详情弹窗作为备用
+    historyDetail.value = {
+      taskHash: row.taskHash || '--',
+      modelName: row.modelName || '--',
+      testCase: row.testCase || '--',
+      algorithms: row.algorithms || [],
+      executionTime: row.executionTime || '--',
+      operatorName: row.operatorName || '--'
+    }
+    historyDetailVisible.value = true
   }
-  historyDetailVisible.value = true
 }
 
 const deleteHistoryRow = async (row) => {
   try {
     await ElMessageBox.confirm(`确认删除任务 ${row.taskHash} 吗？`, '删除确认', { type: 'warning' })
     const targetId = row.id
-    if (!targetId || String(targetId).startsWith('m-')) {
-      historyRows.value = historyRows.value.filter((i) => i.taskHash !== row.taskHash)
-      historyTotal.value = Math.max(0, historyTotal.value - 1)
-      ElMessage.success('已删除（本地记录）')
-      return
+    // Try to delete from local storage first
+    if (targetId && !String(targetId).startsWith('m-')) {
+      try {
+        const res = await deleteBizInferenceTask({ ID: targetId })
+        if (res?.code === 0) {
+          ElMessage.success('删除成功')
+          fetchHistoryData()
+          return
+        }
+      } catch {
+        // fall through to local delete
+      }
     }
-    const res = await deleteBizInferenceTask({ ID: targetId })
-    if (res?.code === 0) {
-      ElMessage.success('删除成功')
-      fetchHistoryData()
-      return
-    }
-    ElMessage.error(res?.msg || '删除失败')
+    // Delete from localStorage
+    if (targetId) deleteInferenceRecord(targetId)
+    historyRows.value = historyRows.value.filter((i) => i.id !== targetId && i.taskHash !== row.taskHash)
+    historyTotal.value = Math.max(0, historyTotal.value - 1)
+    ElMessage.success('已删除')
   } catch (err) {
     if (err !== 'cancel') ElMessage.error('删除失败')
   }
 }
 
 /* ───────── 生命周期 ───────── */
+
+/**
+ * 从已注册路由中动态找到“多模态大模型推理”页面对应的路由，
+ * 即：与当前组件相同但 meta.title 不含《推理任务记录》和《推理排行榜》关键字的路由。
+ */
+const findInferenceRoute = () => {
+  const allRoutes = router.getRoutes()
+  
+  // Try exact match by title first
+  let target = allRoutes.find((r) => {
+    const title = String(r.meta?.title || '')
+    return title.includes('多模态大模型推理')
+  })
+  if (target) return target
+
+  return allRoutes.find((r) => {
+    const title = String(r.meta?.title || '')
+    return (
+      !title.includes('推理任务记录') &&
+      !title.includes('推理排行榜') &&
+      (
+        String(r.name || '').toLowerCase().includes('inference') ||
+        String(r.name || '').toLowerCase().includes('biz_inference_task')
+      )
+    )
+  }) ||
+  // Broader fallback: any route whose title explicitly includes 推理 but NOT the two excluded ones
+  allRoutes.find((r) => {
+    const title = String(r.meta?.title || '')
+    return title.includes('推理') && !title.includes('任务记录') && !title.includes('排行榜')
+  })
+}
+
+/**
+ * 将 sessionStorage 中存储的预填参数应用到当前推理页面。
+ * 分 onMounted / onActivated 两种场景都需要处理（keep-alive 场景下
+ * onMounted 只调一次，后续返回该页动 onActivated）。
+ */
+const PREFILL_KEY = 'mllmt_inference_prefill'
+
+const applyPrefill = () => {
+  if (!isRealtimeOnly.value) return
+  // Priority 1: sessionStorage (set by viewHistoryRow)
+  let changed = false
+  try {
+    const raw = sessionStorage.getItem(PREFILL_KEY)
+    if (raw) {
+      sessionStorage.removeItem(PREFILL_KEY)
+      const p = JSON.parse(raw)
+      if (p.model) {
+        const found = modelOptions.value.find((m) => m.value === p.model)
+        if (found && selectedModel.value !== p.model) {
+          selectedModel.value = p.model
+          changed = true
+        }
+      }
+      if (p.sample) {
+        const idx = parseInt(p.sample, 10)
+        const target = isNaN(idx)
+          ? mockSamples.find((s) => String(s.index) === p.sample)
+          : mockSamples.find((s) => s.index === idx)
+        if (target && selectedSampleIndex.value !== target.index) {
+          selectedSampleIndex.value = target.index
+          changed = true
+        }
+      }
+      if (p.algo) {
+        const found = accelerationOptions.value.find((a) => a.value === p.algo)
+        if (found && !selectedAlgorithms.value.includes(p.algo)) {
+          selectedAlgorithms.value = [p.algo]
+          changed = true
+        }
+      }
+      if (changed) {
+        onParamChange()
+        onSampleChange()
+      }
+      return
+    }
+  } catch { /* ignore */ }
+  // Priority 2: route query params (kept for direct URL navigation)
+  const q = route.query
+  if (q.model) {
+    const found = modelOptions.value.find((m) => m.value === q.model)
+    if (found && selectedModel.value !== q.model) {
+      selectedModel.value = q.model
+      changed = true
+    }
+  }
+  if (q.sample) {
+    const idx = parseInt(q.sample, 10)
+    const target = isNaN(idx)
+      ? mockSamples.find((s) => String(s.index) === q.sample)
+      : mockSamples.find((s) => s.index === idx)
+    if (target && selectedSampleIndex.value !== target.index) {
+      selectedSampleIndex.value = target.index
+      changed = true
+    }
+  }
+  if (q.algo) {
+    const found = accelerationOptions.value.find((a) => a.value === q.algo)
+    if (found && !selectedAlgorithms.value.includes(q.algo)) {
+      selectedAlgorithms.value = [q.algo]
+      changed = true
+    }
+  }
+  
+  if (changed) {
+    onParamChange()
+    onSampleChange()
+  }
+}
+
+onMounted(() => {
+  applyPrefill()
+})
+
+// keep-alive 场景：重新进入页面时触发
+onActivated(() => {
+  // 如果是历史页面，重新加载历史记录（可能新增了记录）
+  if (isHistoryOnly.value) {
+    fetchHistoryData()
+    return
+  }
+  // 如果是推理页面，应用待处理的预填参数
+  if (isRealtimeOnly.value) {
+    applyPrefill()
+  }
+})
 
 watch(
   [isHistoryOnly, isRankOnly],

@@ -1,0 +1,4 @@
+/*! 
+ Build based on gin-vue-admin 
+ Time : 1776703517000 */
+import{s as e}from"./087AC4D233B64EB0index.BYHbN3vy.js";const t=t=>e({url:"/sysExportTemplate/createSysExportTemplate",method:"post",data:t}),a=t=>e({url:"/sysExportTemplate/deleteSysExportTemplate",method:"delete",data:t}),p=t=>e({url:"/sysExportTemplate/deleteSysExportTemplateByIds",method:"delete",data:t}),s=t=>e({url:"/sysExportTemplate/updateSysExportTemplate",method:"put",data:t}),r=t=>e({url:"/sysExportTemplate/findSysExportTemplate",method:"get",params:t}),m=t=>e({url:"/sysExportTemplate/getSysExportTemplateList",method:"get",params:t}),o=t=>e({url:"/sysExportTemplate/exportExcel",method:"get",params:t}),l=t=>e({url:"/sysExportTemplate/exportTemplate",method:"get",params:t}),d=t=>e({url:"/sysExportTemplate/previewSQL",method:"get",params:t});export{l as a,a as b,t as c,p as d,o as e,r as f,m as g,d as p,s as u};

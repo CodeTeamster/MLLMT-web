@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="zh-cn" class="transition-colors">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <meta
+      content="Gin,Vue,Admin,Gin-Vue-Admin,GVA,gin-vue-admin,后台管理框架,vue后台管理框架,gin-vue-admin文档,gin-vue-admin首页,gin-vue-admin,1776703517391,e4e8349bba838236"
+      name="keywords"
+    />
+    <link rel="icon" href="/favicon.ico" />
+    <title></title>
+    <style>
+      .transition-colors {
+        transition-property: color, background-color, border-color,
+          text-decoration-color, fill, stroke;
+        transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+        transition-duration: 150ms;
+      }
+      body {
+        margin: 0;
+        --64f90c3645474bd5: #409eff;
+      }
+      #gva-loading-box {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        width: 100vw;
+      }
+      #loading-text {
+        position: absolute;
+        bottom: calc(50% - 100px);
+        left: 0;
+        width: 100%;
+        text-align: center;
+        color: #666;
+        font-size: 14px;
+      }
+      #loading {
+        position: absolute;
+        top: calc(50% - 20px);
+        left: calc(50% - 20px);
+      }
+      @keyframes loader {
+        0% {
+          left: -100px;
+        }
+        100% {
+          left: 110%;
+        }
+      }
+      #box {
+        width: 50px;
+        height: 50px;
+        background: var(--64f90c3645474bd5);
+        animation: animate 0.5s linear infinite;
+        position: absolute;
+        top: 0;
+        left: 0;
+        border-radius: 3px;
+      }
+      @keyframes animate {
+        17% {
+          border-bottom-right-radius: 3px;
+        }
+        25% {
+          transform: translateY(9px) rotate(22.5deg);
+        }
+        50% {
+          transform: translateY(18px) scale(1, 0.9) rotate(45deg);
+          border-bottom-right-radius: 40px;
+        }
+        75% {
+          transform: translateY(9px) rotate(67.5deg);
+        }
+        100% {
+          transform: translateY(0) rotate(90deg);
+        }
+      }
+      #shadow {
+        width: 50px;
+        height: 5px;
+        background: #000;
+        opacity: 0.1;
+        position: absolute;
+        top: 59px;
+        left: 0;
+        border-radius: 50%;
+        animation: shadow 0.5s linear infinite;
+      }
+      .dark #shadow {
+        background: #fff;
+      }
+      @keyframes shadow {
+        50% {
+          transform: scale(1.2, 1);
+        }
+      }
+    </style>
+    <script type="module" crossorigin src="/assets/087AC4D233B64EB0index.BYHbN3vy.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/087AC4D233B64EB0index.DH176Qd-.css">
+  </head>
+
+  
+<body>
+  <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" style="position: absolute; width: 0; height: 0">
+    <symbol id="ai-gva"  t="1718869075082" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="13564"  ><path d="M274.344554 173.673875c16.429399 0 30.950568 8.00526 39.956484 20.338945a34.906655 34.906655 0 0 1 14.660796 15.754537l1.117013 2.815803 210.138065 597.927736c6.795162 19.268474-5.329083 40.817516-27.041022 48.147913-20.641469 6.95806-42.493035-1.419537-50.451753-18.803052l-1.117013-2.815803-54.477653-154.939008H134.997185L80.566074 837.039954c-6.771891 19.268474-29.856826 28.949253-51.568765 21.618855-20.641469-6.981331-32.602816-26.761769-27.925325-45.239025l0.861031-2.908888L212.047809 212.58316c4.025901-11.426112 13.799764-19.477914 25.598214-22.619512 9.029188-10.006575 22.107548-16.289773 36.67526-16.289773z m386.416675 169.460176c21.828295 0 39.723774 10.890876 41.469106 24.713912l0.116356 2.210755v461.652153c0 14.893506-18.616883 26.947938-41.585462 26.947938-21.805024 0-39.700503-10.890876-41.422565-24.737183l-0.162897-2.210755V370.081989c0-14.870235 18.616883-26.924667 41.585462-26.924667z m-389.697901-48.171184L163.620643 600.628812h214.88537l-107.442685-305.665945z m602.163076-206.181978a12.566396 12.566396 0 0 1 8.144887 8.051802l32.509731 99.041817 101.694723 36.07021a12.566396 12.566396 0 0 1-0.791218 23.922695l-99.53051 27.995137-30.857483 97.552467a12.566396 12.566396 0 0 1-23.899423 0.116355l-32.509732-99.018546-98.669479-31.322905a12.566396 12.566396 0 0 1-0.186169-23.876152l97.505924-32.812256 30.834212-97.529195a12.566396 12.566396 0 0 1 15.754537-8.191429zM649.544557 0.513593c2.676177 0.884302 4.770576 3.025243 5.608336 5.724692l18.523798 59.294772 60.970292 20.66474a8.796477 8.796477 0 0 1-0.325796 16.755194l-60.73758 18.058377-19.780438 59.550754a8.796477 8.796477 0 0 1-16.731924-0.162898l-18.523798-59.271501-59.062061-17.825665a8.796477 8.796477 0 0 1-0.395609-16.708653l59.574025-20.943993 19.780438-59.574025a8.796477 8.796477 0 0 1 11.100317-5.561794z" p-id="13565"></path></symbol><symbol id="close"  xmlns="http://www.w3.org/2000/svg"   viewBox="0 0 1024 1024"><path fill="currentColor" d="M195.2 195.2a64 64 0 0 1 90.496 0L512 421.504L738.304 195.2a64 64 0 0 1 90.496 90.496L602.496 512L828.8 738.304a64 64 0 0 1-90.496 90.496L512 602.496L285.696 828.8a64 64 0 0 1-90.496-90.496L421.504 512L195.2 285.696a64 64 0 0 1 0-90.496"/></symbol><symbol id="customer-gva"  t="1702221805491" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="5932"viewBox="0 0 0 0"><path d="M876.48 981.312H147.52a104.832 104.832 0 0 1-104.832-104.832V469.76a46.08 46.08 0 0 1 46.912-46.912 46.08 46.08 0 0 1 46.912 46.912v406.72c0 6.272 4.736 11.008 10.944 11.008h729.088a10.688 10.688 0 0 0 10.88-11.008V469.76a46.08 46.08 0 0 1 46.976-46.912 46.08 46.08 0 0 1 46.912 46.912v406.72c0 57.92-46.912 104.832-104.832 104.832z"  p-id="5933"></path><path d="M934.4 516.672a49.664 49.664 0 0 1-31.296-12.48L512 152.192l-391.104 352a46.784 46.784 0 0 1-65.728-3.2 48.64 48.64 0 0 1 3.2-67.2l422.4-378.624a47.616 47.616 0 0 1 62.528 0l422.4 378.624a46.784 46.784 0 0 1 3.136 65.664 46.08 46.08 0 0 1-34.432 17.28z" p-id="5934"></path><path d="M627.776 981.312H396.16a46.08 46.08 0 0 1-46.912-46.912V558.912A46.08 46.08 0 0 1 396.16 512h229.952a46.08 46.08 0 0 1 46.976 46.912V934.4a44.8 44.8 0 0 1-45.44 46.912z m-184.64-93.824h136.128v-281.6H443.136v281.6z" p-id="5935"></path></symbol><symbol id="idea"  xmlns="http://www.w3.org/2000/svg"   viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6.09 14.999a6.9 6.9 0 0 1-.59-2.794C5.5 8.5 8.41 5.499 12 5.499s6.5 3.002 6.5 6.706a6.9 6.9 0 0 1-.59 2.794m-5.91-13v1m10 9h-1m-18 0H2m17.07-7.071l-.707.707m-12.726.001l-.707-.707m9.587 14.377c1.01-.327 1.416-1.252 1.53-2.182c.034-.278-.195-.509-.475-.509H8.477a.483.483 0 0 0-.488.534c.112.928.394 1.606 1.464 2.156m5.064 0H9.453m5.064 0c-.121 1.945-.683 2.716-2.51 2.694c-1.954.036-2.404-.916-2.554-2.693"/></symbol><symbol id="lock"  xmlns="http://www.w3.org/2000/svg"   viewBox="0 0 24 24"viewBox="0 0 24 24"><path fill="currentColor" d="M12 2a5 5 0 0 1 5 5v3a3 3 0 0 1 3 3v6a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3v-6a3 3 0 0 1 3-3V7a5 5 0 0 1 5-5m0 12a2 2 0 0 0-1.995 1.85L10 16a2 2 0 1 0 2-2m0-10a3 3 0 0 0-3 3v3h6V7a3 3 0 0 0-3-3"/></symbol><symbol id="server"  xmlns="http://www.w3.org/2000/svg"   viewBox="0 0 14 14"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"><path d="M12.5.5h-11a1 1 0 0 0-1 1v3a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1v-3a1 1 0 0 0-1-1M7.5 3H11M1.5 5.5a1 1 0 0 0-1 1v3a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1v-3a1 1 0 0 0-1-1"/><path d="M3.25 8.25a.25.25 0 0 1 0-.5m0 .5a.25.25 0 0 0 0-.5m0-4.5a.25.25 0 0 1 0-.5m0 .5a.25.25 0 0 0 0-.5M7.5 8H11m-4 2.5v3m-5 0h10"/></g></symbol><symbol id="warn"  xmlns="http://www.w3.org/2000/svg"   viewBox="0 0 1024 1024"viewBox="0 0 1024 1024"><path fill="currentColor" d="M928.99 755.83L574.6 203.25c-12.89-20.16-36.76-32.58-62.6-32.58s-49.71 12.43-62.6 32.58L95.01 755.83c-12.91 20.12-12.9 44.91.01 65.03c12.92 20.12 36.78 32.51 62.59 32.49h708.78c25.82.01 49.68-12.37 62.59-32.49s12.92-44.91.01-65.03M554.67 768h-85.33v-85.33h85.33zm0-426.67v298.66h-85.33V341.32z"/></symbol>
+  </svg>
+
+    <div id="gva-loading-box">
+      <div id="loading">
+        <div id="shadow"></div>
+        <div id="box"></div>
+      </div>
+      <div id="loading-text">系统正在加载中，请稍候...</div>
+    </div>
+    <div id="app"></div>
+  </body>
+</html>
