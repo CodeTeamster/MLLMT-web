@@ -84,7 +84,7 @@
 <script setup>
 import { onMounted, ref } from 'vue'
 import { getBizInferenceRank } from '@/api/biz/biz_inference_task'
-import { getBizModelList } from '@/api/biz/biz_model'
+import { getRankRecords } from '@/utils/inferenceRecords'
 
 defineOptions({
   name: 'BizInferenceRank'
@@ -166,75 +166,43 @@ const resolvePagePayload = (data) => {
   }
 }
 
-const fetchModelRankFallback = async () => {
-  const res = await getBizModelList({
-    page: rankPage.value,
-    pageSize: rankPageSize.value
-  })
-
-  if (res?.code !== 0 || !res?.data) {
-    return false
-  }
-
-  const { list, total } = resolvePagePayload(res.data)
-  if (!list.length) {
-    return false
-  }
-
-  const offset = (rankPage.value - 1) * rankPageSize.value
-  rankRows.value = list.map((item, index) =>
-    mapRankRow(
-      {
-        rank: offset + index + 1,
-        modelName: readField(item, ['modelName', 'model', 'model_name']),
-        algorithmName: readField(item, ['algorithmName', 'algorithm', 'algorithm_name']),
-        operatorName: readField(item, ['creatorName', 'operatorName', 'operator', 'operator_name'], '--'),
-        executionTime: readField(item, ['createdAt', 'CreatedAt', 'executionTime', 'created_at'], '--')
-      },
-      index
-    )
-  )
-  rankTotal.value = total
-  return true
-}
-
 const fetchRankData = async () => {
   rankLoading.value = true
   try {
-    const res = await getBizInferenceRank({
-      page: rankPage.value,
-      pageSize: rankPageSize.value,
-      caseName: rankCase.value,
-      rankBy: rankMetric.value
-    })
-
-    if (res?.code === 0 && res?.data) {
-      const { list, total } = resolvePagePayload(res.data)
-      if (list.length) {
-        rankRows.value = list.map((item, index) => mapRankRow(item, index))
-        rankTotal.value = total
-        return
-      }
-
-      const loadedFromModel = await fetchModelRankFallback()
-      if (loadedFromModel) {
-        return
-      }
+    // Backend expects DatasetId (uint) and PerfType (string) as required fields.
+    // We pass them only when the user explicitly triggers a query with valid values;
+    // on initial load we draw from localStorage persistence instead.
+    const localRecords = getRankRecords(rankMetric.value)
+    if (localRecords.length) {
+      rankRows.value = localRecords
+      rankTotal.value = localRecords.length
+      return
     }
 
-    const loadedFromModel = await fetchModelRankFallback()
-    if (loadedFromModel) {
-      return
+    // Try the API – only when caseOptions have numeric IDs available
+    const caseOpt = caseOptions.value.find((c) => c.value === rankCase.value)
+    const datasetId = caseOpt?.id || 0
+    if (datasetId) {
+      const res = await getBizInferenceRank({
+        page: rankPage.value,
+        pageSize: rankPageSize.value,
+        DatasetId: datasetId,
+        PerfType: rankMetric.value
+      })
+
+      if (res?.code === 0 && res?.data) {
+        const { list, total } = resolvePagePayload(res.data)
+        if (list.length) {
+          rankRows.value = list.map((item, index) => mapRankRow(item, index))
+          rankTotal.value = total
+          return
+        }
+      }
     }
 
     rankRows.value = mockRankRows
     rankTotal.value = mockRankRows.length
   } catch (e) {
-    const loadedFromModel = await fetchModelRankFallback()
-    if (loadedFromModel) {
-      return
-    }
-
     rankRows.value = mockRankRows
     rankTotal.value = mockRankRows.length
   } finally {
