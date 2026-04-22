@@ -95,7 +95,9 @@ export function addInferenceRecord(record) {
 }
 
 /**
- * Get all records for the rank page (sorted by a metric descending)
+ * Get all records for the rank page (sorted by a metric).
+ * gpuMemory: ascending (lower is better)
+ * throughput / latency: descending (higher is better)
  * @param {string} [metric='throughput'] - 'throughput' | 'latency' | 'gpuMemory'
  */
 export function getRankRecords(metric = 'throughput') {
@@ -106,8 +108,9 @@ export function getRankRecords(metric = 'throughput') {
     if (!isFinite(av) && !isFinite(bv)) return 0
     if (!isFinite(av)) return 1
     if (!isFinite(bv)) return -1
-    // For latency: lower is better, so sort ascending; for others: descending
-    if (metric === 'latency') return av - bv
+    // gpuMemory: ascending (lower usage is better)
+    if (metric === 'gpuMemory') return av - bv
+    // throughput & latency: descending
     return bv - av
   })
   return sorted.map((rec, idx) => ({
@@ -118,7 +121,8 @@ export function getRankRecords(metric = 'throughput') {
     algorithmName: rec.algorithmName,
     algorithmValue: rec.algorithmValue,
     throughput: isFinite(Number(rec.throughput)) ? Number(rec.throughput).toFixed(2) : '--',
-    latency: isFinite(Number(rec.latency)) ? Number(rec.latency).toFixed(4) : '--',
+    // latency stored in seconds, display in milliseconds
+    latency: isFinite(Number(rec.latency)) ? (Number(rec.latency) * 1000).toFixed(2) : '--',
     gpuMemory: isFinite(Number(rec.gpuMemory)) ? Number(rec.gpuMemory).toFixed(2) : '--',
     executionTime: rec.executionTime,
     operatorName: rec.operatorName,
