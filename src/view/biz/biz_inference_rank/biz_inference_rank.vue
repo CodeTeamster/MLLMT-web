@@ -62,7 +62,6 @@
           <el-table-column prop="latency" label="延迟 (ms)" min-width="120" />
           <el-table-column prop="gpuMemory" label="显存占用 (GB)" min-width="130" />
           <el-table-column prop="operatorName" label="执行人" min-width="90" />
-          <el-table-column prop="executionTime" label="日期" min-width="170" sortable />
         </el-table>
       </div>
 
@@ -99,8 +98,7 @@ const caseOptions = ref([
 const rankMetricOptions = [
   { label: '吞吐量', value: 'throughput' },
   { label: '单token延迟', value: 'latency' },
-  { label: '显存占用', value: 'gpuMemory' },
-  { label: '执行时间', value: 'executionTime' }
+  { label: '显存占用', value: 'gpuMemory' }
 ]
 
 const mockRankRows = [
