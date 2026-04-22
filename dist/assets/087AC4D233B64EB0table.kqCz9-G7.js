@@ -1,4 +1,0 @@
-/*! 
- Build based on gin-vue-admin 
- Time : 1776703517000 */
-import{H as a,l as t,f as e,o as s,c as o,d as l,w as r,J as i,k as m}from"./087AC4D233B64EB0index.BYHbN3vy.js";const d={__name:"table",setup(d){const n=a.create(),p=m([]),u=async()=>{const{data:a}=await(t=1,n({url:"https://api.github.com/repos/flipped-aurora/gin-vue-admin/commits?page="+t,method:"get"}));var t;p.value=a.slice(0,5).map((a,t)=>({ranking:t+1,message:a.commit.message,author:a.commit.author.name,date:i(a.commit.author.date,"yyyy-MM-dd hh:mm:ss")}))};return t(()=>{u()}),(a,t)=>{const i=e("el-table-column"),m=e("el-table");return s(),o("div",null,[l(m,{data:p.value,stripe:"",style:{width:"100%"}},{default:r(()=>[l(i,{prop:"ranking",label:"排名",width:"80",align:"center"}),l(i,{prop:"message",label:"更新内容","show-overflow-tooltip":""}),l(i,{prop:"author",label:"提交人",width:"140"}),l(i,{prop:"date",label:"时间",width:"180"})]),_:1},8,["data"])])}}};export{d as default};
