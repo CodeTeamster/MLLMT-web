@@ -96,6 +96,39 @@ export const getBizInferenceTaskList = (params) => {
 }
 
 // @Tags BizInferenceTask
+// @Summary 发起真实推理任务
+// @Security ApiKeyAuth
+// @Accept application/json
+// @Produce application/json
+// @Param data body model.BizInferenceTaskRun true "发起推理任务"
+// @Success 200 {string} string "{\"success\":true,\"data\":{},\"msg\":\"发起成功\"}"
+// @Router /inferenceTask/runBizInferenceTask [post]
+export const runBizInferenceTask = (data) => {
+  return service({
+    url: '/inferenceTask/runBizInferenceTask',
+    method: 'post',
+    data,
+    donNotShowLoading: true
+  })
+}
+
+// @Tags BizInferenceTask
+// @Summary 获取已完成推理记录
+// @Security ApiKeyAuth
+// @Accept application/json
+// @Produce application/json
+// @Param data query model.BizInferenceLog true "获取已完成推理记录"
+// @Success 200 {string} string "{\"success\":true,\"data\":{},\"msg\":\"获取成功\"}"
+// @Router /inferenceTask/getBizInferenceCompleteRecord [get]
+export const getBizInferenceCompleteRecord = (params) => {
+  return service({
+    url: '/inferenceTask/getBizInferenceCompleteRecord',
+    method: 'get',
+    params
+  })
+}
+
+// @Tags BizInferenceTask
 // @Summary 分页获取推理性能榜单
 // @Security ApiKeyAuth
 // @Accept application/json
