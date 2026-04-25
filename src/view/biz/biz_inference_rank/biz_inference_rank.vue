@@ -104,7 +104,7 @@ const rankMetricOptions = [
 const mockRankRows = [
   {
     rank: 1,
-    modelName: 'Qwen3-VL-8B-Instruct',
+    modelName: 'Qwen2.5-VL-7B-Instruct',
     algorithmName: 'bnb-4bit',
     throughput: '340 token/s',
     latency: '0.0005',
@@ -114,7 +114,7 @@ const mockRankRows = [
   },
   {
     rank: 2,
-    modelName: 'InternVL3_5-8B',
+    modelName: 'Qwen2.5-VL-3B-Instruct',
     algorithmName: 'bnb-4bit',
     throughput: '335 token/s',
     latency: '0.0007',
